@@ -1,7 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
 import random
-
 
 class Creature:
     def __init__(self, x, y, color, r_rate, s_rate, k_factor):
@@ -24,23 +22,20 @@ class SimulationApp:
         self.root = root
         self.root.title("Population Analytics Pro")
         self.root.geometry("1200x850")
-        self.root.configure(bg="#F5F5F7")  # Apple-style siva
+        self.root.configure(bg="#F5F5F7")
 
         self.is_running = False
         self.current_cycle = 0
         self.max_cycles = 600
-        self.history = [[], [], []]
-        self.colors = ["#007AFF", "#FF3B30", "#34C759"]  # Moderna modra, rdeča, zelena
+        self.history = [[], [], []] # grafična zgodovina populacij
+        self.colors = ["#007AFF", "#FF3B30", "#34C759"]  # Modra, rdeča, zelena
 
         self.setup_ui()
 
     def create_card(self, parent, title, title_color=None):
-        """Ustvari belo kartico z efektom sence in zaobljenim vtisom."""
-        # Zunanji okvir za senco
-        shadow = tk.Frame(parent, bg="#D1D1D6", bd=0)
+        shadow = tk.Frame(parent, bg="#D1D1D6", bd=0)   # Zunanji okvir za senco
+        container = tk.Frame(shadow, bg="white", bd=0)  # Notranji beli vsebnik
 
-        # Notranji beli vsebnik
-        container = tk.Frame(shadow, bg="white", bd=0)
         container.pack(fill=tk.BOTH, expand=True, padx=(0, 1), pady=(0, 1))
 
         if title:
@@ -51,10 +46,10 @@ class SimulationApp:
         return shadow, container
 
     def setup_ui(self):
-        # Glavni vsebnik z odmiki
         main_frame = tk.Frame(self.root, bg="#F5F5F7", padx=30, pady=20)
         main_frame.pack(fill=tk.BOTH, expand=True)
 
+        # naslov app
         header = tk.Label(main_frame, text="Nadzorna plošča populacij",
                           font=("Segoe UI Semibold", 22), bg="#F5F5F7", fg="#1D1D1F")
         header.pack(anchor="w", pady=(0, 25))
@@ -97,14 +92,14 @@ class SimulationApp:
                     ["25", "0.08", "0.04", "0.0006"],
                     ["25", "0.12", "0.06", "0.0004"]]
 
-        for i in range(3):
+        for i in range(3): # 3 kartice za 3 populacije
             card_sh, card_cont = self.create_card(param_container, f"POPULACIJA {i + 1}", self.colors[i])
             card_sh.pack(side=tk.LEFT, padx=10, expand=True, fill=tk.X)
 
             grid_f = tk.Frame(card_cont, bg="white")
             grid_f.pack(pady=15, padx=10)
 
-            pop_in = {}
+            pop_in = {} # slovar st, R, S, K za vsako populacijo
             for idx, txt in enumerate(labels):
                 tk.Label(grid_f, text=txt, bg="white", font=("Segoe UI", 9), fg="#424245").grid(row=0, column=idx * 2)
                 e = tk.Entry(grid_f, width=6, bg="#F5F5F7", relief="flat", justify="center", font=("Segoe UI", 10))
@@ -132,7 +127,6 @@ class SimulationApp:
         self.lbl_info.pack(side=tk.RIGHT, padx=10)
 
     def draw_axes(self):
-        """Izriše osi glede na trenutno velikost platna, da ni odrezano."""
         self.canvas_graph.delete("all")
         w = self.canvas_graph.winfo_width()
         h = self.canvas_graph.winfo_height()
@@ -161,9 +155,11 @@ class SimulationApp:
         self.current_cycle = 0
         self.history = [[], [], []]
         self.populations = [[], [], []]
+
         self.btn_start.config(state=tk.DISABLED, bg="#D1D1D6")
         self.btn_stop.config(state=tk.NORMAL)
 
+        # vpisani podatki iz kartic se uporabijo za inicializacijo populacij
         for i in range(3):
             try:
                 count = int(self.input_entries[i]["st"].get())
@@ -190,39 +186,41 @@ class SimulationApp:
             self.stop_simulation()
             return
 
+        # ciscenje platna in brisanje bitij
         self.canvas_sim.delete("creatures")
         width_sim = self.canvas_sim.winfo_width()
         height_sim = self.canvas_sim.winfo_height()
         total_count = 0
 
         for i in range(3):
-            # n predstavlja N v enačbi (trenutno število bitij te populacije)
-            n = len(self.populations[i])
+            n = len(self.populations[i]) #trenutno število bitij te populacije
             total_count += n
-            self.pop_count_labels[i].config(text=f"Pop {i + 1}: {n}")
+            self.pop_count_labels[i].config(text=f"Pop {i + 1}: {n}") # posodobitev števca pod grafom
 
             next_generation = []
 
-            # Implementacija enačbe: Delta = R - S - K * N * N
-            # V simulaciji to pomeni, da se verjetnost smrti poveča za faktor K * N
+            # Delta (sprememba)= (R - S - K * N) * N
+            # R * N = število novih bitij zaradi razmnoževanja
+            # S * N = število bitij, ki umrejo zaradi naravne
+            # K * N^2 = število bitij, ki umrejo zaradi omejitve prostora (gostote)
+
             for c in self.populations[i]:
                 c.move(width_sim, height_sim)
                 self.canvas_sim.create_oval(c.x - 3, c.y - 3, c.x + 3, c.y + 3,
                                             fill=c.color, outline="", tags="creatures")
 
-                # Pogoj smrti nadgradimo glede na količino bitij (N)
-                # Verjetnost smrti = S + K * N
+                # 1. del za verjetnost SMRTI: naravna smrt (S) + omejitev prostora (K * N) = (skupna verjetnost+)
                 death_probability = c.s_rate + (c.k_factor * n)
 
-                if random.random() > death_probability:
-                    # Bitje preživi cikel
-                    next_generation.append(c)
+                # 2. del za verjetnost RAZMNOŽEVANJA: R
+                if random.random() > death_probability: # zivi/umre
+                    next_generation.append(c)   # Bitje preživi cikel
 
-                    # Verjetnost razmnoževanja ostane R
+                    # Verjetnost razmnoževanja (rodi novi potomec)
                     if random.random() < c.r_rate:
                         next_generation.append(Creature(c.x, c.y, c.color, c.r_rate, c.s_rate, c.k_factor))
 
-            self.populations[i] = next_generation
+            self.populations[i] = next_generation # novi seznam bitij preživelih
             self.history[i].append(len(next_generation))
 
         self.draw_graph()
@@ -237,8 +235,8 @@ class SimulationApp:
         ox, oy = 50, h - 40
 
         max_pop = 400
-        step_x = (w - ox - 40) / self.max_cycles
-        step_y = (oy - 40) / max_pop
+        step_x = (w - ox - 40) / self.max_cycles # horizontalni korak glede na število ciklov
+        step_y = (oy - 40) / max_pop # vertikalni korak glede na maksimalno populacijo
 
         for i in range(3):
             if len(self.history[i]) < 2: continue
@@ -246,15 +244,13 @@ class SimulationApp:
             for cycle_idx, val in enumerate(self.history[i]):
                 x = ox + (cycle_idx * step_x)
                 y = oy - (val * step_y)
-                points.extend([x, y])
+                points.extend([x, y]) # seznam koordinat
 
-            if len(points) >= 4:
+            if len(points) >= 4: # vsaj dve točki za risanje črte 2x2
                 self.canvas_graph.create_line(points, fill=self.colors[i], width=2, smooth=True)
-
 
 if __name__ == "__main__":
     root = tk.Tk()
-    # Zagotovimo, da se okno najprej izriše, da dobimo pravilne dimenzije platna
     root.update()
     app = SimulationApp(root)
     root.mainloop()
