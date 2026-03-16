@@ -2,9 +2,5 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-<<<<<<< HEAD
-    <mapping directory="$PROJECT_DIR$/vaja1" vcs="" />
-=======
->>>>>>> b695d21e8a7d75539a296658a89730392dd8a39d
   </component>
 </project>
