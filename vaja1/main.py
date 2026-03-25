@@ -88,9 +88,9 @@ class SimulationApp:
 
         self.input_entries = []
         labels = ["st", "R", "S", "K"]
-        defaults = [["25", "0.10", "0.05", "0.0005"],
-                    ["25", "0.08", "0.04", "0.0006"],
-                    ["25", "0.12", "0.06", "0.0004"]]
+        defaults = [["30", "0.05", "0.05", "0.0"],
+                    ["200", "0.05", "0.1", "0.0"],
+                    ["10", "0.1", "0.05", "0.0005"]]
 
         for i in range(3): # 3 kartice za 3 populacije
             card_sh, card_cont = self.create_card(param_container, f"POPULACIJA {i + 1}", self.colors[i])
