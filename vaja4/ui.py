@@ -56,8 +56,8 @@ MUT_H    = 38
 BOT_H    = 330
 TOP_H    = SCREEN_H - SPD_H - BOT_H - MUT_H   # 494
 
-GRAPH_H  = int(TOP_H * 0.76)   # ~375
-STATS_H  = TOP_H - GRAPH_H     # ~119
+GRAPH_H  = int(TOP_H * 0.83)   # ~410
+STATS_H  = TOP_H - GRAPH_H     # ~84
 SIM_H    = TOP_H               # 494
 
 SPEED_Y  = TOP_H               # 494
@@ -215,11 +215,11 @@ class UI:
             SCREEN_W - PX*3 - lbl_spd_w,
             "", 0.2, 15.0, cfg.sim_speed)
 
-        # ── Drsnik mutacije (od COL_W, spodaj) ────────────────────────────
+        # ── Drsnik mutacije (od COL_W, spodaj) – zaklenjen med izvajanjem ──
         self.slider_mutation = Slider(
             COL_W + PX, MUT_Y + 24,
             SCREEN_W - COL_W - PX*2,
-            "", 0.0, 0.5, cfg.mutation_chance)
+            "", 0.0, 0.5, cfg.mutation_chance, locked=True)
 
         # ── Fox/rabbit: _BPY0 brez badge (samo header + mal razmika) ──────
         _BPY0  = BOTTOM_Y + _hdr_span + 20  # brez badge – bliže naslovu
@@ -287,15 +287,14 @@ class UI:
                 self.btn_visual.label = "Vizualizacija: IZKLOPLJENA"
                 self.btn_visual.color = BTN_GREY
 
+        # Teren samo pred zagonom
         for i, btn in enumerate(self.terrain_btns):
-            if btn.handle(event):
+            if btn.handle(event) and not sim.running:
                 cfg.terrain_type = i + 1
-                if sim.running and sim.terrain:
-                    sim.terrain.rebake()
 
         running = sim.running
-        self.slider_speed.handle(event)
-        self.slider_mutation.handle(event)
+        self.slider_speed.handle(event)                              # hitrost – vedno
+        self.slider_mutation.handle(event, sim_running=running)      # zaklenjena med izvajanjem
         self.slider_clover.handle(event, sim_running=running)
         for sl in self.fox_sliders:    sl.handle(event, sim_running=running)
         for sl in self.rabbit_sliders: sl.handle(event, sim_running=running)
@@ -492,7 +491,7 @@ class UI:
 
         n_fox    = len(sim.foxes)   if sim.running else 0
         n_rabbit = len(sim.rabbits) if sim.running else 0
-        n_clover = len(sim.clovers) if sim.running else 0
+        n_clover = sum(1 for c in sim.clovers if not c.eaten) if sim.running else 0
         step     = sim.tick         if sim.running else 0
         elapsed  = sim.elapsed      if sim.running else 0.0
 

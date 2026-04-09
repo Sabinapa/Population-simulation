@@ -64,7 +64,7 @@ class Entity:
 class Clover(Entity):
     REGEN_TIME  = 20.0
     COLOR       = (155, 75, 210)   # vijolična – radič
-    COLOR_EATEN = ( 42, 18,  65)   # temno vijolična – pojeden (prosojni videz)
+    COLOR_EATEN = ( 80, 38, 118)   # prosojno vijolična – pojeden radič (~50 % prosojnost)
 
     def __init__(self, x, y, cfg):
         super().__init__(x, y, cfg)
@@ -72,14 +72,10 @@ class Clover(Entity):
         self.regen_timer = 0.0
 
     def update(self, dt, terrain, clover_list):
-        if self.eaten:
-            self.regen_timer -= dt
-            if self.regen_timer <= 0:
-                self.eaten = False
+        pass   # radič se ne obnavlja – hrana samo upada
 
     def eat(self):
-        self.eaten       = True
-        self.regen_timer = self.REGEN_TIME
+        self.eaten = True
 
     def draw(self, surface, cam_x, cam_y):
         sx = int(self.x - cam_x)

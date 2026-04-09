@@ -140,24 +140,16 @@ class Simulation:
                 self.foxes.remove(fx)
         self.foxes.extend(new_foxes[:max(0, cfg.max_foxes - len(self.foxes))])
 
-        # Statistike (vsake 30 korakov)
+        # Statistike (vsake 30 korakov) – radič: samo aktivni (nepojedi)
         if self.tick % 30 == 0:
             self.history_fox.append(len(self.foxes))
             self.history_rabbit.append(len(self.rabbits))
-            self.history_clover.append(len(self.clovers))
+            active_clovers = sum(1 for c in self.clovers if not c.eaten)
+            self.history_clover.append(active_clovers)
             for lst in (self.history_fox, self.history_rabbit, self.history_clover):
                 if len(lst) > 200:
                     lst.pop(0)
-
-        # Dodajanje detelje
-        if self.tick % 60 == 0 and len(self.clovers) < cfg.max_clovers:
-            lnd = terrain.land_cells()
-            if lnd:
-                r, c = random.choice(lnd)
-                self.clovers.append(Clover(
-                    c * cfg.CELL + cfg.CELL // 2,
-                    r * cfg.CELL + cfg.CELL // 2,
-                    cfg))
+        # Radič se ne obnavlja in ne dodaja – hrana samo upada
 
 
 # ══════════════════════════════════════════════════════════════════════════════
