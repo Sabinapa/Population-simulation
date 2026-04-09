@@ -1,48 +1,41 @@
 """
 Ekosistem simulacija: Lisica (plenilec) – Zajec (plen) – Detelja (hrana)
-Avtor: generiran z Claude
-Zahteve: pip install pygame noise numpy
-Zagon:  python main.py
+Zagon:  cd vaja4 && python main.py
 """
 
 import pygame
 import sys
-import math
 import random
-import numpy as np
-
-# ── opcijsko: Perlinov šum ─────────────────────────────────────────────────
-try:
-    import noise as pnoise
-    HAS_NOISE = True
-except ImportError:
-    HAS_NOISE = False
-    print("[OPOZORILO] Knjižnica 'noise' ni nameščena – terrain 4 (Perlin) ne bo na voljo.")
 
 from config   import Config
 from terrain  import Terrain
 from entities import Fox, Rabbit, Clover
 from ui       import UI
 
+
 # ══════════════════════════════════════════════════════════════════════════════
 def main():
     pygame.init()
     pygame.display.set_caption("Ekosistem Simulacija")
 
-    cfg  = Config()          # globalne nastavitve (lahko jih UI tudi spreminja)
-    ui   = UI(cfg)           # prikazuje meni, gumbe, drsnik časa …
-    sim  = Simulation(cfg, ui)
+    cfg = Config()
+    ui  = UI(cfg)
+    sim = Simulation(cfg, ui)
 
     clock = pygame.time.Clock()
     while True:
-        dt = clock.tick(cfg.FPS) / 1000.0   # čas med sličicami v sekundah
+        dt = clock.tick(cfg.FPS) / 1000.0
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit(); sys.exit()
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                pygame.quit()
+                sys.exit()
             ui.handle_event(event, sim)
 
-        if sim.running:
+        if sim.running and not sim.paused:
             sim.update(dt)
 
         ui.draw(sim)
@@ -54,64 +47,66 @@ class Simulation:
     """Jedro simulacije – drži teren, seznam bitij in časovnik."""
 
     def __init__(self, cfg: "Config", ui: "UI"):
-        self.cfg      = cfg
-        self.ui       = ui
-        self.running  = False
-        self.paused   = False
-        self.tick     = 0           # diskretni korak simulacije
-        self.elapsed  = 0.0        # sekundsekunde od zagona
+        self.cfg         = cfg
+        self.ui          = ui
+        self.running     = False
+        self.paused      = False
+        self.show_visual = True    # ko False: simulacija teče, vizualizacija izklopljena
+        self.tick        = 0
+        self.elapsed     = 0.0
 
-        self.terrain  : Terrain    = None
-        self.entities : list       = []
-        self.foxes    : list[Fox]  = []
-        self.rabbits  : list[Rabbit] = []
-        self.clovers  : list[Clover] = []
+        self.terrain : Terrain       = None
+        self.foxes   : list[Fox]     = []
+        self.rabbits : list[Rabbit]  = []
+        self.clovers : list[Clover]  = []
 
-        # statistike za graf
         self.history_fox    = []
         self.history_rabbit = []
         self.history_clover = []
 
     # ── zagon ─────────────────────────────────────────────────────────────
     def start(self):
-        """Ustvari teren in začetna bitja glede na Config."""
         cfg = self.cfg
         self.terrain = Terrain(cfg)
+        cfg.cam_x    = 0
+        cfg.cam_y    = 0
 
         self.foxes   = []
         self.rabbits = []
         self.clovers = []
 
-        land_cells = self.terrain.land_cells()  # seznam (row, col) kopnih celic
+        land = self.terrain.land_cells()
 
-        # ── detelje ───────────────────────────────────────────────────────
-        chosen = random.sample(land_cells, min(cfg.initial_clovers, len(land_cells)))
-        for (r, c) in chosen:
-            x = c * cfg.CELL + cfg.CELL // 2
-            y = r * cfg.CELL + cfg.CELL // 2
-            self.clovers.append(Clover(x, y, cfg))
+        # Detelje
+        chosen = random.sample(land, min(cfg.initial_clovers, len(land)))
+        for r, c in chosen:
+            self.clovers.append(Clover(
+                c * cfg.CELL + cfg.CELL // 2,
+                r * cfg.CELL + cfg.CELL // 2,
+                cfg))
 
-        # ── zajci ─────────────────────────────────────────────────────────
-        spawn = random.sample(land_cells, min(cfg.initial_rabbits, len(land_cells)))
+        # Zajci
+        spawn = random.sample(land, min(cfg.initial_rabbits, len(land)))
         for i, (r, c) in enumerate(spawn):
-            x = c * cfg.CELL + cfg.CELL // 2
-            y = r * cfg.CELL + cfg.CELL // 2
-            gender = "M" if i % 2 == 0 else "F"
-            self.rabbits.append(Rabbit(x, y, gender, cfg))
+            self.rabbits.append(Rabbit(
+                c * cfg.CELL + cfg.CELL // 2,
+                r * cfg.CELL + cfg.CELL // 2,
+                "M" if i % 2 == 0 else "F",
+                cfg))
 
-        # ── lisice ────────────────────────────────────────────────────────
-        spawn = random.sample(land_cells, min(cfg.initial_foxes, len(land_cells)))
+        # Lisice
+        spawn = random.sample(land, min(cfg.initial_foxes, len(land)))
         for i, (r, c) in enumerate(spawn):
-            x = c * cfg.CELL + cfg.CELL // 2
-            y = r * cfg.CELL + cfg.CELL // 2
-            gender = "M" if i % 2 == 0 else "F"
-            self.foxes.append(Fox(x, y, gender, cfg))
+            self.foxes.append(Fox(
+                c * cfg.CELL + cfg.CELL // 2,
+                r * cfg.CELL + cfg.CELL // 2,
+                "M" if i % 2 == 0 else "F",
+                cfg))
 
-        self.entities = self.foxes + self.rabbits + self.clovers
-        self.tick     = 0
-        self.elapsed  = 0.0
-        self.running  = True
-        self.paused   = False
+        self.tick    = 0
+        self.elapsed = 0.0
+        self.running = True
+        self.paused  = False
 
         self.history_fox    = [len(self.foxes)]
         self.history_rabbit = [len(self.rabbits)]
@@ -119,58 +114,50 @@ class Simulation:
 
     # ── posodabljanje ─────────────────────────────────────────────────────
     def update(self, dt: float):
-        if self.paused:
-            return
-
         self.elapsed += dt * self.cfg.sim_speed
         self.tick    += 1
 
         terrain = self.terrain
         cfg     = self.cfg
 
-        # ── posodobi detelje (rast) ────────────────────────────────────────
+        # Detelje
         for cl in self.clovers[:]:
             cl.update(dt, terrain, self.clovers)
 
-        # ── posodobi zajce ─────────────────────────────────────────────────
+        # Zajci
         new_rabbits = []
         for rb in self.rabbits[:]:
             rb.update(dt, terrain, self.foxes, self.rabbits, self.clovers, new_rabbits)
             if rb.dead:
                 self.rabbits.remove(rb)
-
-        # Omejitev populacije
         self.rabbits.extend(new_rabbits[:max(0, cfg.max_rabbits - len(self.rabbits))])
 
-        # ── posodobi lisice ────────────────────────────────────────────────
+        # Lisice
         new_foxes = []
         for fx in self.foxes[:]:
             fx.update(dt, terrain, self.foxes, self.rabbits, new_foxes)
             if fx.dead:
                 self.foxes.remove(fx)
-
         self.foxes.extend(new_foxes[:max(0, cfg.max_foxes - len(self.foxes))])
 
-        # ── statistike ────────────────────────────────────────────────────
+        # Statistike (vsake 30 korakov)
         if self.tick % 30 == 0:
             self.history_fox.append(len(self.foxes))
             self.history_rabbit.append(len(self.rabbits))
             self.history_clover.append(len(self.clovers))
-            # Ohrani zadnjih 200 točk
             for lst in (self.history_fox, self.history_rabbit, self.history_clover):
                 if len(lst) > 200:
                     lst.pop(0)
 
-        # Dodajanje detelje če je premalo
+        # Dodajanje detelje
         if self.tick % 60 == 0 and len(self.clovers) < cfg.max_clovers:
-            land = terrain.land_cells()
-            if land:
-                r, c = random.choice(land)
+            lnd = terrain.land_cells()
+            if lnd:
+                r, c = random.choice(lnd)
                 self.clovers.append(Clover(
                     c * cfg.CELL + cfg.CELL // 2,
                     r * cfg.CELL + cfg.CELL // 2,
-                    cfg
-                ))
+                    cfg))
 
 
 # ══════════════════════════════════════════════════════════════════════════════

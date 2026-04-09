@@ -14,29 +14,16 @@ class Config:
     GRID_W      = 120        # število celic po širini
     GRID_H      = 90         # število celic po višini
 
-    terrain_type = 1         # 1=reka, 2=jezero, 3=več jezer, 4=Perlin
-
-    # Perlin nastavitve (samo za terrain_type == 4)
-    perlin_scale  = 4.0
-    perlin_octaves = 6
-    perlin_seed   = 42
-
-    # višinski pasovi (Perlin) – meje od 0.0 do 1.0
-    # voda 40 %, pesek 2.5 %, trava 35 %, gozd 15 %, gora 5 %, vrh 2.5 %
-    HEIGHT_WATER  = 0.40
-    HEIGHT_SAND   = 0.425
-    HEIGHT_GRASS  = 0.775
-    HEIGHT_FOREST = 0.925
-    HEIGHT_MOUNTAIN = 0.975
-    # vrh gore: > 0.975
+    # 1=reka, 2=jezero, 3=delta, 4=dolina
+    terrain_type = 1
 
     # ── barve terena ──────────────────────────────────────────────────────
-    COLOR_WATER    = (55,  120, 200)
-    COLOR_SAND     = (210, 195, 140)
-    COLOR_GRASS    = (80,  160,  60)
-    COLOR_FOREST   = (30,  100,  30)
-    COLOR_MOUNTAIN = (130, 120, 110)
-    COLOR_PEAK     = (240, 240, 245)
+    COLOR_WATER    = (45,  105, 190)
+    COLOR_SAND     = (205, 190, 130)
+    COLOR_GRASS    = (75,  155,  55)
+    COLOR_FOREST   = (25,   90,  25)
+    COLOR_MOUNTAIN = (120, 112, 102)
+    COLOR_PEAK     = (235, 238, 245)
 
     # ── začetne populacije ────────────────────────────────────────────────
     initial_foxes   = 8
@@ -48,19 +35,19 @@ class Config:
     max_clovers = 300
 
     # ── lastnosti plenilca (lisica) ───────────────────────────────────────
-    fox_speed        = 55.0   # px/s
-    fox_size         = 8      # polmer v px
-    fox_sense_radius = 90     # px
-    fox_max_hunger   = 120.0  # sekunde do lakote
-    fox_max_thirst   = 80.0   # sekunde do žeje
-    fox_max_age      = 600.0  # sekunde življenja
-    fox_repro_drive  = 0.65   # prag [0..1] ko začne iskati partnerja
-    fox_variation    = 0.10   # ± faktor naključne variacije
+    fox_speed        = 55.0
+    fox_size         = 12      # polmer v px
+    fox_sense_radius = 90.0    # px
+    fox_max_hunger   = 120.0   # sekunde do lakote
+    fox_max_thirst   = 80.0    # sekunde do žeje
+    fox_max_age      = 600.0
+    fox_repro_drive  = 0.65
+    fox_variation    = 0.10
 
     # ── lastnosti plena (zajec) ───────────────────────────────────────────
     rabbit_speed        = 45.0
-    rabbit_size         = 5
-    rabbit_sense_radius = 70
+    rabbit_size         = 8       # polmer v px
+    rabbit_sense_radius = 70.0
     rabbit_max_hunger   = 90.0
     rabbit_max_thirst   = 60.0
     rabbit_max_age      = 480.0
@@ -68,18 +55,20 @@ class Config:
     rabbit_variation    = 0.10
 
     # ── mutacija ──────────────────────────────────────────────────────────
-    mutation_chance  = 0.10   # verjetnost mutacije posamezne lastnosti
-    mutation_amount  = 0.20   # ± faktor mutacije
+    mutation_chance  = 0.10
+    mutation_amount  = 0.20
 
     # ── hitrost simulacije ────────────────────────────────────────────────
-    sim_speed = 1.0           # množitelj časa (1.0 = normalno)
+    sim_speed = 1.0
 
-    # ── pomikanje prikaza ─────────────────────────────────────────────────
-    VIEW_W  = 960   # širina vidnega področja simulacije
-    VIEW_H  = 720   # višina vidnega področja simulacije
-    cam_x   = 0     # odmik kamere v px
+    # ── simulacijsko področje (levo zgoraj) ───────────────────────────────
+    VIEW_W  = 760   # širina simulacijske površine v px
+    VIEW_H  = 432   # višina simulacijske površine v px
+
+    # ── kamera ────────────────────────────────────────────────────────────
+    cam_x   = 0
     cam_y   = 0
-    cam_speed = 300  # px/s
+    cam_speed = 300
 
     @property
     def MAP_W(self):
