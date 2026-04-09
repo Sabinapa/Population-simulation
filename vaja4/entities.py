@@ -294,34 +294,17 @@ class Rabbit(Animal):
         if self.dead:
             return
 
-        # ── BEG pred lisicami (absolutna prioriteta) ──────────────────────
+        # ── BEG pred lisicami (absolutna prioriteta – pred vsem) ──────────
         if self._flee(foxes, dt, terrain):
             return
 
-        # ── PRIORITETA: žeja ──────────────────────────────────────────────
-        if self.thirst > 0.45:
-            water = terrain.nearest_water(self.x, self.y, 320)
-            if water:
-                self._move_towards(water[0], water[1], dt, terrain)
-                self._drink(terrain)
-                return
-
-        # ── PRIORITETA: lakota ────────────────────────────────────────────
-        if self.hunger > 0.40:
-            target = self._find_food(clovers)
-            if target:
-                if _dist(self.x, self.y, target.x, target.y) < self.size + 6:
-                    target.eat()
-                    self.hunger = max(0.0, self.hunger - 0.4)
-                else:
-                    self._move_towards(target.x, target.y, dt, terrain)
-                return
-
-        # ── PRIORITETA: razmnoževanje ──────────────────────────────────────
+        # ── PRIORITETA 1: razmnoževanje ───────────────────────────────────
+        # Ob veliki želji za razmnoževanje preneha iskati vodo in hrano.
+        # Blokira se samo pri kritični žeji/lakoti (tik pred smrtjo).
         if (self.repro >= self.repro_drive
                 and self.repro_cooldown <= 0
-                and self.thirst < 0.7
-                and self.hunger < 0.8):
+                and self.thirst < 0.85
+                and self.hunger < 0.90):
             partner = self._find_partner(rabbits)
             if partner:
                 if _dist(self.x, self.y, partner.x, partner.y) < 14:
@@ -330,6 +313,25 @@ class Rabbit(Animal):
                     self.repro_cooldown = random.uniform(30.0, 60.0)
                     return
                 self._move_towards(partner.x, partner.y, dt, terrain)
+                return
+
+        # ── PRIORITETA 2: žeja ────────────────────────────────────────────
+        if self.thirst > 0.45:
+            water = terrain.nearest_water(self.x, self.y, 320)
+            if water:
+                self._move_towards(water[0], water[1], dt, terrain)
+                self._drink(terrain)
+                return
+
+        # ── PRIORITETA 3: lakota ──────────────────────────────────────────
+        if self.hunger > 0.40:
+            target = self._find_food(clovers)
+            if target:
+                if _dist(self.x, self.y, target.x, target.y) < self.size + 6:
+                    target.eat()
+                    self.hunger = max(0.0, self.hunger - 0.4)
+                else:
+                    self._move_towards(target.x, target.y, dt, terrain)
                 return
 
         self._wander(dt, terrain)
@@ -449,30 +451,13 @@ class Fox(Animal):
         if self.dead:
             return
 
-        # ── PRIORITETA: žeja ──────────────────────────────────────────────
-        if self.thirst > 0.45:
-            water = terrain.nearest_water(self.x, self.y, 380)
-            if water:
-                self._move_towards(water[0], water[1], dt, terrain)
-                self._drink(terrain)
-                return
-
-        # ── PRIORITETA: lov ───────────────────────────────────────────────
-        if self.hunger > 0.30:
-            prey = self._find_best_prey(rabbits)
-            if prey:
-                if _dist(self.x, self.y, prey.x, prey.y) < self.size + prey.size + 2:
-                    prey.dead    = True
-                    self.hunger  = max(0.0, self.hunger - 0.5)
-                else:
-                    self._move_towards(prey.x, prey.y, dt, terrain)
-                return
-
-        # ── PRIORITETA: razmnoževanje ──────────────────────────────────────
+        # ── PRIORITETA 1: razmnoževanje ───────────────────────────────────
+        # Ob veliki želji za razmnoževanje preneha iskati vodo in hrano.
+        # Blokira se samo pri kritični žeji/lakoti (tik pred smrtjo).
         if (self.repro >= self.repro_drive
                 and self.repro_cooldown <= 0
-                and self.thirst < 0.6
-                and self.hunger < 0.7):
+                and self.thirst < 0.85
+                and self.hunger < 0.90):
             partner = self._find_partner(foxes)
             if partner:
                 if _dist(self.x, self.y, partner.x, partner.y) < 16:
@@ -481,6 +466,25 @@ class Fox(Animal):
                     self.repro_cooldown = random.uniform(40.0, 80.0)
                     return
                 self._move_towards(partner.x, partner.y, dt, terrain)
+                return
+
+        # ── PRIORITETA 2: žeja ────────────────────────────────────────────
+        if self.thirst > 0.45:
+            water = terrain.nearest_water(self.x, self.y, 380)
+            if water:
+                self._move_towards(water[0], water[1], dt, terrain)
+                self._drink(terrain)
+                return
+
+        # ── PRIORITETA 3: lov ─────────────────────────────────────────────
+        if self.hunger > 0.30:
+            prey = self._find_best_prey(rabbits)
+            if prey:
+                if _dist(self.x, self.y, prey.x, prey.y) < self.size + prey.size + 2:
+                    prey.dead    = True
+                    self.hunger  = max(0.0, self.hunger - 0.5)
+                else:
+                    self._move_towards(prey.x, prey.y, dt, terrain)
                 return
 
         self._wander(dt, terrain)
