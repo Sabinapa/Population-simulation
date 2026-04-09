@@ -30,9 +30,9 @@ class Config:
     initial_rabbits = 30
     initial_clovers = 80
 
-    max_foxes   = 60
-    max_rabbits = 200
-    max_clovers = 300
+    max_foxes   = 120
+    max_rabbits = 300
+    max_clovers = 600
 
     # ── lastnosti plenilca (lisica) ───────────────────────────────────────
     fox_speed        = 55.0

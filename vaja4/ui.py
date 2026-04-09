@@ -37,7 +37,7 @@ BTN_GREEN   = ( 30,  90,  42)
 BTN_GREY    = ( 55,  62,  72)
 GRAPH_FOX    = (215,  62,  62)
 GRAPH_RABBIT = (232, 232, 232)
-GRAPH_CLOVER = (220, 200,  40)   # KORUZA – rumena
+GRAPH_CLOVER = (155,  75, 210)   # RADIČ – vijolična
 GREEN_COL    = ( 88, 228, 108)
 RED_COL      = (225,  80,  65)
 ACCENT2      = (235, 125,  45)
@@ -56,8 +56,8 @@ MUT_H    = 38
 BOT_H    = 330
 TOP_H    = SCREEN_H - SPD_H - BOT_H - MUT_H   # 494
 
-GRAPH_H  = int(TOP_H * 0.65)   # 321
-STATS_H  = TOP_H - GRAPH_H     # 173
+GRAPH_H  = int(TOP_H * 0.76)   # ~375
+STATS_H  = TOP_H - GRAPH_H     # ~119
 SIM_H    = TOP_H               # 494
 
 SPEED_Y  = TOP_H               # 494
@@ -201,10 +201,10 @@ class UI:
         self.btn_visual = Button(PX, y_vis, COL_W - PX*2, 23,
                                  "Vizualizacija: VKLOPLJENA", BTN_GREEN)
 
-        # Koruza drsnik
+        # Radič drsnik
         self.slider_clover = Slider(
             PX, _y_kor_bar, COL_W - PX*2,
-            "Koruza", 10, 300, cfg.initial_clovers, integer=True, locked=True)
+            "Radič", 10, 500, cfg.initial_clovers, integer=True, locked=True)
 
         # ── Drsnik hitrosti (polna širina) ─────────────────────────────────
         lbl_spd_w = FONT_SMALL.size("Hitrost simulacije")[0]
@@ -230,7 +230,7 @@ class UI:
             Slider(COL2_X+PX, _BPY0 + i*_BSTEP, COL_W-PX*2,
                    lbl, mn, mx, val, integer=intg, locked=True)
             for i, (lbl, mn, mx, val, intg) in enumerate([
-                ("Število",     1,   30,  cfg.initial_foxes,    True),
+                ("Število",     1,   60,  cfg.initial_foxes,    True),
                 ("Hitrost",    20,  130,  cfg.fox_speed,        False),
                 ("Velikost",    4,   22,  cfg.fox_size,         True),
                 ("Zaznava",    30,  200,  cfg.fox_sense_radius, False),
@@ -245,7 +245,7 @@ class UI:
             Slider(COL3_X+PX, _BPY0 + i*_BSTEP, COL_W-PX*2,
                    lbl, mn, mx, val, integer=intg, locked=True)
             for i, (lbl, mn, mx, val, intg) in enumerate([
-                ("Število",     5,   80,  cfg.initial_rabbits,    True),
+                ("Število",     5,  150,  cfg.initial_rabbits,    True),
                 ("Hitrost",    20,  120,  cfg.rabbit_speed,       False),
                 ("Velikost",    3,   18,  cfg.rabbit_size,        True),
                 ("Zaznava",    20,  150,  cfg.rabbit_sense_radius,False),
@@ -398,28 +398,32 @@ class UI:
         pygame.draw.rect(surf, CARD_A, (RIGHT_X, 0, RIGHT_W, GRAPH_H))
         _draw_hdr(surf, RIGHT_X+PX, PY, RIGHT_W-PX*2, "Graf populacije")
 
-        # Margins – brez legende, bolj prostoren graf
-        mx, mt, mb = 40, 28, 22
+        mx, mt, mb = 44, 30, 24
         px0 = RIGHT_X + mx
         py0 = mt
-        pw  = RIGHT_W - mx - PX
-        ph  = GRAPH_H - mt - mb   # ~271 px
+        pw  = RIGHT_W - mx - PX - 50   # 50 px prostora desno za vrednosti ob pikah
+        ph  = GRAPH_H - mt - mb
 
-        pygame.draw.line(surf, TEXT_DIM, (px0, py0),    (px0,    py0+ph), 1)
-        pygame.draw.line(surf, TEXT_DIM, (px0, py0+ph), (px0+pw, py0+ph), 1)
+        # Temno ozadje za prostor grafa
+        pygame.draw.rect(surf, (8, 12, 22), (px0, py0, pw, ph))
+        pygame.draw.rect(surf, (24, 38, 62), (px0, py0, pw, ph), 1)
 
         if not sim.running:
             self._draw_y_ticks(surf, px0, py0, pw, ph, 100)
+            pygame.draw.line(surf, (40, 62, 95), (px0, py0),    (px0,    py0+ph), 1)
+            pygame.draw.line(surf, (40, 62, 95), (px0, py0+ph), (px0+pw, py0+ph), 1)
             return
 
         series = [
             (sim.history_fox,    GRAPH_FOX,    "Lisice"),
             (sim.history_rabbit, GRAPH_RABBIT, "Zajci"),
-            (sim.history_clover, GRAPH_CLOVER, "Koruza"),
+            (sim.history_clover, GRAPH_CLOVER, "Radič"),
         ]
         all_vals = [v for s, _, _ in series for v in s]
         if not all_vals:
             self._draw_y_ticks(surf, px0, py0, pw, ph, 100)
+            pygame.draw.line(surf, (40, 62, 95), (px0, py0),    (px0,    py0+ph), 1)
+            pygame.draw.line(surf, (40, 62, 95), (px0, py0+ph), (px0+pw, py0+ph), 1)
             return
 
         max_v = max(all_vals) or 1
@@ -433,33 +437,52 @@ class UI:
 
         n_data = max((len(s) for s, _, _ in series if s), default=0)
         if n_data > 1:
-            n_xt = min(5, n_data - 1)
+            n_xt = min(6, n_data - 1)
             for i in range(n_xt + 1):
                 idx = int(i / n_xt * (n_data - 1))
                 gx  = px0 + int(idx / (n_data - 1) * pw)
-                pygame.draw.line(surf, GRID_COL, (gx, py0), (gx, py0+ph), 1)
-                lbl = FONT_SMALL.render(str(idx * 30), True, TEXT_DIM)
-                surf.blit(lbl, (gx - lbl.get_width()//2, py0+ph+4))
+                pygame.draw.line(surf, (16, 26, 44), (gx, py0), (gx, py0+ph), 1)
+                lbl = FONT_SMALL.render(str(idx * 30), True, (60, 88, 122))
+                surf.blit(lbl, (gx - lbl.get_width()//2, py0+ph+5))
 
-        for data, color, _ in series:
+        # Krivulje + pike + vrednosti
+        dot_x = px0 + pw + 6
+        used_y = []   # za izogibanje prekrivanju oznak
+        for data, color, name in series:
             if len(data) < 2:
                 continue
             n   = len(data)
             pts = [(px0 + int(i/(n-1)*pw),
-                    max(py0, min(py0+ph, py0+ph - int(v/max_nice*ph))))
+                    max(py0+1, min(py0+ph-1, py0+ph - int(v/max_nice*ph))))
                    for i, v in enumerate(data)]
             pygame.draw.lines(surf, color, False, pts, 2)
 
-        _text(surf, FONT_SMALL, "čas (koraki)",
-              (px0 + pw//2 - 28, py0+ph+4), TEXT_DIM)
+            # Pika na desnem robu z vrednostjo
+            ex, ey = pts[-1]
+            pygame.draw.circle(surf, color, (ex, ey), 5)
+            pygame.draw.circle(surf, (8, 12, 22), (ex, ey), 2)
+
+            # Vrednost desno od grafa – prepreči prekrivanje
+            label_y = ey - FONT_SMALL.get_height()//2
+            for uy in used_y:
+                if abs(label_y - uy) < 14:
+                    label_y = uy + 14
+            used_y.append(label_y)
+            val_s = FONT_SMALL.render(f"{int(data[-1])} {name}", True, color)
+            surf.blit(val_s, (dot_x, label_y))
+
+        # Osi
+        pygame.draw.line(surf, (40, 62, 95), (px0, py0),    (px0,    py0+ph), 1)
+        pygame.draw.line(surf, (40, 62, 95), (px0, py0+ph), (px0+pw, py0+ph), 1)
+        _text(surf, FONT_SMALL, "čas (koraki)", (px0 + pw//2 - 30, py0+ph+5), (60, 88, 122))
 
     def _draw_y_ticks(self, surf, px0, py0, pw, ph, max_nice):
         for i in range(5):
             val = int(i * max_nice / 4)
             gy  = py0 + ph - int(i / 4 * ph)
-            pygame.draw.line(surf, GRID_COL, (px0, gy), (px0+pw, gy), 1)
-            lbl = FONT_SMALL.render(str(val), True, TEXT_DIM)
-            surf.blit(lbl, (px0 - lbl.get_width() - 4, gy - lbl.get_height()//2))
+            pygame.draw.line(surf, (16, 26, 44), (px0, gy), (px0+pw, gy), 1)
+            lbl = FONT_SMALL.render(str(val), True, (60, 88, 122))
+            surf.blit(lbl, (px0 - lbl.get_width() - 5, gy - lbl.get_height()//2))
 
     # ── statistika (desno spodaj) – kompaktna 2-vrstična oblika ──────────
     def _draw_stats_panel(self, sim):
@@ -473,14 +496,14 @@ class UI:
         step     = sim.tick         if sim.running else 0
         elapsed  = sim.elapsed      if sim.running else 0.0
 
-        fh = FONT_BODY.get_height()
+        fh    = FONT_BODY.get_height()
         col_w = RIGHT_W // 3
 
-        # ── Vrstica 1: Lisice  Zajci  Koruza ──────────────────────────────
+        # ── Vrstica 1: Lisice  Zajci  Radič ───────────────────────────────
         for i, (lbl, val, col) in enumerate([
             ("Lisice",  str(n_fox),    GRAPH_FOX),
             ("Zajci",   str(n_rabbit), GRAPH_RABBIT),
-            ("Koruza",  str(n_clover), GRAPH_CLOVER),
+            ("Radič",   str(n_clover), GRAPH_CLOVER),
         ]):
             cx = RIGHT_X + PX + i * col_w
             _text(surf, FONT_BODY, lbl, (cx, sy), TEXT_DIM)
@@ -497,15 +520,6 @@ class UI:
             _text(surf, FONT_BODY, lbl, (cx, sy2), TEXT_DIM)
             lw = FONT_BODY.size(lbl)[0]
             _text(surf, FONT_BODY, val, (cx + lw + 8, sy2), LABEL)
-
-        # ── Trend (vrstica 3) ──────────────────────────────────────────────
-        if sim.running:
-            tt, tc = _population_trend(sim.history_rabbit)
-            if tt:
-                sy3 = sy2 + fh + 8
-                _text(surf, FONT_SMALL, "Trend zajcev:", (RIGHT_X+PX, sy3), TEXT_DIM)
-                tw = FONT_SMALL.size("Trend zajcev:")[0]
-                _text(surf, FONT_SMALL, tt, (RIGHT_X + PX + tw + 8, sy3), tc)
 
     # ── pas hitrosti simulacije ───────────────────────────────────────────
     def _draw_speed_bar(self):
@@ -543,7 +557,7 @@ class UI:
 
         self.btn_visual.draw(surf, FONT_SMALL)
 
-        # Koruza drsnik
+        # Radič drsnik
         self.slider_clover.draw(surf, FONT_SMALL, sim_running=running)
 
         # ── Stolpec 2: Lastnosti lisice (brez badge) ───────────────────────

@@ -62,8 +62,9 @@ class Entity:
 # ══════════════════════════════════════════════════════════════════════════════
 
 class Clover(Entity):
-    REGEN_TIME = 20.0
-    COLOR      = (220, 200, 40)
+    REGEN_TIME  = 20.0
+    COLOR       = (155, 75, 210)   # vijolična – radič
+    COLOR_EATEN = ( 42, 18,  65)   # temno vijolična – pojeden (prosojni videz)
 
     def __init__(self, x, y, cfg):
         super().__init__(x, y, cfg)
@@ -81,11 +82,13 @@ class Clover(Entity):
         self.regen_timer = self.REGEN_TIME
 
     def draw(self, surface, cam_x, cam_y):
-        if self.eaten:
-            return
         sx = int(self.x - cam_x)
         sy = int(self.y - cam_y)
-        pygame.draw.circle(surface, self.COLOR, (sx, sy), 4)
+        if self.eaten:
+            # Prikaži pojeden radič kot temno/prosojno piko
+            pygame.draw.circle(surface, self.COLOR_EATEN, (sx, sy), 3)
+        else:
+            pygame.draw.circle(surface, self.COLOR, (sx, sy), 4)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
