@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//mnt/c/Users/sabin/FERI/Magisterij/Kvaliteta/Vaje/**)",
+      "Bash(pip install:*)"
+    ]
+  }
+}
