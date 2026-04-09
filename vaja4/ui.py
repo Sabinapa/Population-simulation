@@ -51,18 +51,18 @@ SIM_W    = 700
 RIGHT_W  = SCREEN_W - SIM_W   # 800
 RIGHT_X  = SIM_W               # 700
 
-SPD_H    = 38
-MUT_H    = 38
-BOT_H    = 330
-TOP_H    = SCREEN_H - SPD_H - BOT_H - MUT_H   # 494
+SPD_H    = 34
+MUT_H    = 34
+BOT_H    = 285                              # zmanjšan – spodnji panel nižji
+TOP_H    = SCREEN_H - SPD_H - BOT_H - MUT_H   # 547
 
-GRAPH_H  = int(TOP_H * 0.83)   # ~410
-STATS_H  = TOP_H - GRAPH_H     # ~84
-SIM_H    = TOP_H               # 494
+GRAPH_H  = int(TOP_H * 0.83)   # ~454
+STATS_H  = TOP_H - GRAPH_H     # ~93
+SIM_H    = TOP_H               # 547
 
-SPEED_Y  = TOP_H               # 494
-BOTTOM_Y = SPEED_Y + SPD_H     # 532
-MUT_Y    = BOTTOM_Y + BOT_H    # 862
+SPEED_Y  = TOP_H               # 547
+BOTTOM_Y = SPEED_Y + SPD_H     # 581
+MUT_Y    = BOTTOM_Y + BOT_H    # 866
 
 COL_W    = SCREEN_W // 3       # 500
 COL2_X   = COL_W               # 500
@@ -287,10 +287,11 @@ class UI:
                 self.btn_visual.label = "Vizualizacija: IZKLOPLJENA"
                 self.btn_visual.color = BTN_GREY
 
-        # Teren samo pred zagonom
+        # Teren samo pred zagonom – takoj prikaže predogled
         for i, btn in enumerate(self.terrain_btns):
             if btn.handle(event) and not sim.running:
                 cfg.terrain_type = i + 1
+                sim.preview_terrain()
 
         running = sim.running
         self.slider_speed.handle(event)                              # hitrost – vedno
@@ -357,7 +358,19 @@ class UI:
         if sim.terrain:
             ss.blit(sim.terrain.surface, (-cfg.cam_x, -cfg.cam_y))
 
-            if sim.running and sim.show_visual:
+            # Predogled terena – simulacija še ni zagona
+            if not sim.running:
+                overlay = pygame.Surface((SIM_W, SIM_H), pygame.SRCALPHA)
+                overlay.fill((0, 0, 0, 110))
+                ss.blit(overlay, (0, 0))
+                f1 = pygame.font.SysFont("segoeui", 18, bold=True)
+                f2 = pygame.font.SysFont("segoeui", 13)
+                m1 = f1.render("PREDOGLED TERENA", True, ACCENT)
+                m2 = f2.render("Pritisni  ▶ Start  za zagon simulacije", True, TEXT_DIM)
+                ss.blit(m1, (SIM_W//2 - m1.get_width()//2, SIM_H//2 - 20))
+                ss.blit(m2, (SIM_W//2 - m2.get_width()//2, SIM_H//2 + 8))
+
+            elif sim.running and sim.show_visual:
                 for cl in sim.clovers:
                     cl.draw(ss, cfg.cam_x, cfg.cam_y)
 
@@ -454,7 +467,7 @@ class UI:
             pts = [(px0 + int(i/(n-1)*pw),
                     max(py0+1, min(py0+ph-1, py0+ph - int(v/max_nice*ph))))
                    for i, v in enumerate(data)]
-            pygame.draw.lines(surf, color, False, pts, 2)
+            pygame.draw.aalines(surf, color, False, pts)
 
             # Pika na desnem robu z vrednostjo
             ex, ey = pts[-1]

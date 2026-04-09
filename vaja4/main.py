@@ -21,6 +21,7 @@ def main():
     cfg = Config()
     ui  = UI(cfg)
     sim = Simulation(cfg, ui)
+    sim.preview_terrain()   # pokaži teren takoj ob zagonu
 
     clock = pygame.time.Clock()
     while True:
@@ -112,6 +113,12 @@ class Simulation:
         self.history_rabbit = [len(self.rabbits)]
         self.history_clover = [len(self.clovers)]
 
+    # ── predogled terena (pred zagonom) ───────────────────────────────────
+    def preview_terrain(self):
+        self.terrain   = Terrain(self.cfg)
+        self.cfg.cam_x = 0
+        self.cfg.cam_y = 0
+
     # ── posodabljanje ─────────────────────────────────────────────────────
     def update(self, dt: float):
         self.elapsed += dt * self.cfg.sim_speed
@@ -150,6 +157,10 @@ class Simulation:
                 if len(lst) > 200:
                     lst.pop(0)
         # Radič se ne obnavlja in ne dodaja – hrana samo upada
+
+        # Samodejni premor ko nimamo več lisic IN zajcev
+        if len(self.foxes) == 0 and len(self.rabbits) == 0:
+            self.paused = True
 
 
 # ══════════════════════════════════════════════════════════════════════════════
