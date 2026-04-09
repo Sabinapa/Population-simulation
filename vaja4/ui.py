@@ -410,10 +410,10 @@ class UI:
         pygame.draw.rect(surf, CARD_A, (RIGHT_X, 0, RIGHT_W, GRAPH_H))
         _draw_hdr(surf, RIGHT_X+PX, PY, RIGHT_W-PX*2, "Graf populacije")
 
-        mx, mt, mb = 44, 30, 24
+        mx, mt, mb = 50, 34, 34
         px0 = RIGHT_X + mx
         py0 = mt
-        pw  = RIGHT_W - mx - PX - 50   # 50 px prostora desno za vrednosti ob pikah
+        pw  = RIGHT_W - mx - PX - 64   # 64 px prostora desno za vrednosti ob pikah
         ph  = GRAPH_H - mt - mb
 
         # Temno ozadje za prostor grafa
