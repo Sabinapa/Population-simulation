@@ -410,91 +410,122 @@ class UI:
         pygame.draw.rect(surf, CARD_A, (RIGHT_X, 0, RIGHT_W, GRAPH_H))
         _draw_hdr(surf, RIGHT_X+PX, PY, RIGHT_W-PX*2, "Graf populacije")
 
-        mx, mt, mb = 50, 34, 34
+        fsm_h = FONT_SMALL.get_height()   # ~12 px
+
+        # Robovi: levo za y-oznake, zgoraj pod naslovno vrstico,
+        # spodaj za x-oznake + napis osi, desno za vrednostne labele
+        mx = 54           # levo  – dovolj za "300", "1200" …
+        mt = 48           # zgoraj – pod header linijo
+        mb = fsm_h * 2 + 12   # spodaj – vrstica za tick številke + vrstica za "čas"
+        mr = 76           # desno  – za "999 Radič"
+
         px0 = RIGHT_X + mx
         py0 = mt
-        pw  = RIGHT_W - mx - PX - 64   # 64 px prostora desno za vrednosti ob pikah
+        pw  = RIGHT_W - mx - mr
         ph  = GRAPH_H - mt - mb
 
-        # Temno ozadje za prostor grafa
-        pygame.draw.rect(surf, (8, 12, 22), (px0, py0, pw, ph))
+        # Ozadje grafa
+        pygame.draw.rect(surf, (8, 12, 22),  (px0, py0, pw, ph))
         pygame.draw.rect(surf, (24, 38, 62), (px0, py0, pw, ph), 1)
 
-        if not sim.running:
-            self._draw_y_ticks(surf, px0, py0, pw, ph, 100)
-            pygame.draw.line(surf, (40, 62, 95), (px0, py0),    (px0,    py0+ph), 1)
-            pygame.draw.line(surf, (40, 62, 95), (px0, py0+ph), (px0+pw, py0+ph), 1)
-            return
+        # Izračun max vrednosti za os Y
+        if sim.running:
+            series = [
+                (sim.history_fox,    GRAPH_FOX,    "Lisice"),
+                (sim.history_rabbit, GRAPH_RABBIT, "Zajci"),
+                (sim.history_clover, GRAPH_CLOVER, "Radič"),
+            ]
+            all_vals = [v for s, _, _ in series for v in s]
+        else:
+            series   = []
+            all_vals = []
 
-        series = [
-            (sim.history_fox,    GRAPH_FOX,    "Lisice"),
-            (sim.history_rabbit, GRAPH_RABBIT, "Zajci"),
-            (sim.history_clover, GRAPH_CLOVER, "Radič"),
-        ]
-        all_vals = [v for s, _, _ in series for v in s]
-        if not all_vals:
-            self._draw_y_ticks(surf, px0, py0, pw, ph, 100)
-            pygame.draw.line(surf, (40, 62, 95), (px0, py0),    (px0,    py0+ph), 1)
-            pygame.draw.line(surf, (40, 62, 95), (px0, py0+ph), (px0+pw, py0+ph), 1)
-            return
-
-        max_v = max(all_vals) or 1
+        max_v = max(all_vals) if all_vals else 100
         if max_v >= 10:
             mag      = 10 ** math.floor(math.log10(max_v))
             max_nice = math.ceil(max_v / mag) * mag
         else:
             max_nice = max(10, math.ceil(max_v / 5) * 5)
 
-        self._draw_y_ticks(surf, px0, py0, pw, ph, max_nice)
+        # ── Y-os: mrežne črte + oznake ───────────────────────────────────
+        N_Y = 5
+        for i in range(N_Y + 1):
+            val = int(i * max_nice / N_Y)
+            gy  = py0 + ph - int(i / N_Y * ph)
+            # mrežna črta
+            pygame.draw.line(surf, (20, 32, 52), (px0, gy), (px0 + pw, gy), 1)
+            # kratka tick-ica na osi
+            pygame.draw.line(surf, (60, 90, 130), (px0 - 4, gy), (px0, gy), 1)
+            # oznaka – desno poravnana
+            lbl = FONT_SMALL.render(str(val), True, (110, 150, 190))
+            surf.blit(lbl, (px0 - lbl.get_width() - 7, gy - fsm_h // 2))
 
-        n_data = max((len(s) for s, _, _ in series if s), default=0)
-        if n_data > 1:
-            n_xt = min(6, n_data - 1)
-            for i in range(n_xt + 1):
-                idx = int(i / n_xt * (n_data - 1))
-                gx  = px0 + int(idx / (n_data - 1) * pw)
-                pygame.draw.line(surf, (16, 26, 44), (gx, py0), (gx, py0+ph), 1)
-                lbl = FONT_SMALL.render(str(idx * 30), True, (60, 88, 122))
-                surf.blit(lbl, (gx - lbl.get_width()//2, py0+ph+5))
+        # ── X-os: mrežne črte + oznake + napis osi ───────────────────────
+        n_data = max((len(s) for s, _, _ in series if s), default=2)
+        n_xt   = min(7, max(1, n_data - 1))
+        tick_y = py0 + ph + 6               # prva vrstica: številke
+        axis_y = tick_y + fsm_h + 4         # druga vrstica: "čas (koraki)"
 
-        # Krivulje + pike + vrednosti
-        dot_x = px0 + pw + 6
-        used_y = []   # za izogibanje prekrivanju oznak
+        for i in range(n_xt + 1):
+            frac = i / n_xt
+            idx  = int(frac * max(n_data - 1, 1))
+            gx   = px0 + int(frac * pw)
+            # navpična mrežna črta
+            pygame.draw.line(surf, (20, 32, 52), (gx, py0), (gx, py0 + ph), 1)
+            # kratka tick-ica na osi
+            pygame.draw.line(surf, (60, 90, 130), (gx, py0 + ph), (gx, py0 + ph + 4), 1)
+            # oznaka
+            lbl = FONT_SMALL.render(str(idx * 30), True, (110, 150, 190))
+            surf.blit(lbl, (gx - lbl.get_width() // 2, tick_y))
+
+        # napis x-osi – centriran, v drugi vrstici
+        ax_lbl = FONT_SMALL.render("čas  (koraki)", True, (70, 100, 140))
+        surf.blit(ax_lbl, (px0 + pw // 2 - ax_lbl.get_width() // 2, axis_y))
+
+        # ── Osi (robni črti) ──────────────────────────────────────────────
+        AX_COL = (55, 85, 130)
+        pygame.draw.line(surf, AX_COL, (px0, py0),       (px0,       py0 + ph), 2)
+        pygame.draw.line(surf, AX_COL, (px0, py0 + ph),  (px0 + pw,  py0 + ph), 2)
+
+        if not series:
+            return
+
+        # ── Krivulje ──────────────────────────────────────────────────────
+        dot_x  = px0 + pw + 8
+        used_y = []
         for data, color, name in series:
             if len(data) < 2:
                 continue
             n   = len(data)
-            pts = [(px0 + int(i/(n-1)*pw),
-                    max(py0+1, min(py0+ph-1, py0+ph - int(v/max_nice*ph))))
-                   for i, v in enumerate(data)]
+            pts = [
+                (px0 + int(i / (n - 1) * pw),
+                 max(py0 + 1, min(py0 + ph - 1,
+                     py0 + ph - int(v / max_nice * ph))))
+                for i, v in enumerate(data)
+            ]
             pygame.draw.aalines(surf, color, False, pts)
 
-            # Pika na desnem robu z vrednostjo
+            # Pika + vrednostna oznaka desno od grafa
             ex, ey = pts[-1]
-            pygame.draw.circle(surf, color, (ex, ey), 5)
-            pygame.draw.circle(surf, (8, 12, 22), (ex, ey), 2)
+            pygame.draw.circle(surf, color,        (ex, ey), 5)
+            pygame.draw.circle(surf, (8, 12, 22),  (ex, ey), 2)
 
-            # Vrednost desno od grafa – prepreči prekrivanje
-            label_y = ey - FONT_SMALL.get_height()//2
+            label_y = ey - fsm_h // 2
             for uy in used_y:
-                if abs(label_y - uy) < 14:
-                    label_y = uy + 14
+                if abs(label_y - uy) < fsm_h + 2:
+                    label_y = uy + fsm_h + 2
             used_y.append(label_y)
-            val_s = FONT_SMALL.render(f"{int(data[-1])} {name}", True, color)
+            val_s = FONT_SMALL.render(f"{int(data[-1])}  {name}", True, color)
             surf.blit(val_s, (dot_x, label_y))
 
-        # Osi
-        pygame.draw.line(surf, (40, 62, 95), (px0, py0),    (px0,    py0+ph), 1)
-        pygame.draw.line(surf, (40, 62, 95), (px0, py0+ph), (px0+pw, py0+ph), 1)
-        _text(surf, FONT_SMALL, "čas (koraki)", (px0 + pw//2 - 30, py0+ph+5), (60, 88, 122))
-
     def _draw_y_ticks(self, surf, px0, py0, pw, ph, max_nice):
-        for i in range(5):
-            val = int(i * max_nice / 4)
-            gy  = py0 + ph - int(i / 4 * ph)
-            pygame.draw.line(surf, (16, 26, 44), (px0, gy), (px0+pw, gy), 1)
-            lbl = FONT_SMALL.render(str(val), True, (60, 88, 122))
-            surf.blit(lbl, (px0 - lbl.get_width() - 5, gy - lbl.get_height()//2))
+        """Ohranjena za morebitno zunanja klica – zdaj notranje ni več v uporabi."""
+        for i in range(6):
+            val = int(i * max_nice / 5)
+            gy  = py0 + ph - int(i / 5 * ph)
+            pygame.draw.line(surf, (20, 32, 52), (px0, gy), (px0 + pw, gy), 1)
+            lbl = FONT_SMALL.render(str(val), True, (110, 150, 190))
+            surf.blit(lbl, (px0 - lbl.get_width() - 7, gy - FONT_SMALL.get_height() // 2))
 
     # ── statistika (desno spodaj) – kompaktna 2-vrstična oblika ──────────
     def _draw_stats_panel(self, sim):
