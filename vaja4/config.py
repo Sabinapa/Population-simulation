@@ -5,8 +5,8 @@ UI lahko med izvajanjem spreminja vrednosti tega objekta.
 
 class Config:
     # ── okno ──────────────────────────────────────────────────────────────
-    SCREEN_W    = 1280
-    SCREEN_H    = 780
+    SCREEN_W    = 1500
+    SCREEN_H    = 900
     FPS         = 60
 
     # ── teren ─────────────────────────────────────────────────────────────
@@ -62,8 +62,8 @@ class Config:
     sim_speed = 1.0
 
     # ── simulacijsko področje (levo zgoraj) ───────────────────────────────
-    VIEW_W  = 760   # širina simulacijske površine v px
-    VIEW_H  = 432   # višina simulacijske površine v px
+    VIEW_W  = 700   # širina simulacijske površine v px
+    VIEW_H  = 494   # višina simulacijske površine v px
 
     # ── kamera ────────────────────────────────────────────────────────────
     cam_x   = 0
