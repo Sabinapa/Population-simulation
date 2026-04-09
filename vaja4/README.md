@@ -84,10 +84,12 @@ Teren je mogoče izbrati pred zagonom – po kliku se takoj prikaže predogled.
 ### Prioritetna vrsta potreb
 
 ```
-Žeja  →  Lakota  →  Razmnoževanje  →  Tavanje
+Razmnoževanje  →  Žeja  →  Lakota  →  Tavanje
 ```
 
-> Razmnoževanje je blokirano pri visoki žeji (> 60 %) ali lakoti (> 70–80 %).
+> Ob veliki želji za razmnoževanje bitje preneha iskati vodo in hrano ter išče le partnerja.  
+> Razmnoževanje je blokirano samo pri kritični žeji (> 85 %) ali lakoti (> 90 %) – tik pred smrtjo.  
+> Za zajca je beg pred plenilci absolutna prioriteta (pred vsem ostalim).
 
 ### Lisica (plenilec)
 
@@ -135,7 +137,7 @@ Hitrost simulacije je nastavljiva med izvajanjem.
 
 | Sklop | % | Status |
 |---|---|---|
-| Osnovna simulacija (teren, bitja, potrebe, spol, starost, zaznava, variacija) | 60 % | ✅ implementirano |
+| Osnovna simulacija (teren, bitja, potrebe, spol, starost, zaznava, variacija, prioritetna vrsta) | 60 % | ✅ implementirano |
 | Perlinov šum + 6 višinskih pasov z razmerji | 10 % | ⚠️ 6 pasov vizualno prisotnih, Perlinov šum ni implementiran |
 | Lov in beg (izbira plena, beg pred skupino, izogibanje) | 10 % | ✅ implementirano |
 | Dedovanje in mutacija | 5 % | ✅ implementirano |
