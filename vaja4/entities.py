@@ -63,7 +63,7 @@ class Entity:
 
 class Clover(Entity):
     REGEN_TIME = 20.0
-    COLOR      = (60, 200, 80)
+    COLOR      = (220, 200, 40)
 
     def __init__(self, x, y, cfg):
         super().__init__(x, y, cfg)

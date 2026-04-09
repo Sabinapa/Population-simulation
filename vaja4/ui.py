@@ -28,20 +28,20 @@ BD       = ( 34,  52,  82)
 BD2      = ( 48,  72, 108)
 ACCENT   = ( 82, 182, 238)
 TEXT_MAIN   = (215, 232, 250)
-LABEL       = (185, 210, 235)   # svetlejše oznake
+LABEL       = (185, 210, 235)
 TEXT_DIM    = (100, 132, 168)
-BTN_HOVER   = ( 55, 145, 200)
-BTN_NORM    = ( 28,  75, 130)
-BTN_RED     = ( 85,  28,  28)
-BTN_GREEN   = ( 26,  82,  38)
-BTN_GREY    = ( 55,  60,  70)
+BTN_HOVER   = ( 65, 155, 215)
+BTN_NORM    = ( 32,  82, 145)
+BTN_RED     = ( 95,  32,  32)
+BTN_GREEN   = ( 30,  90,  42)
+BTN_GREY    = ( 55,  62,  72)
 GRAPH_FOX    = (215,  62,  62)
 GRAPH_RABBIT = (232, 232, 232)
-GRAPH_CLOVER = ( 52, 215,  52)
+GRAPH_CLOVER = (220, 200,  40)   # KORUZA – rumena
 GREEN_COL    = ( 88, 228, 108)
 RED_COL      = (225,  80,  65)
 ACCENT2      = (235, 125,  45)
-GRID_COL     = ( 32,  50,  80)
+GRID_COL     = ( 30,  46,  74)
 
 # ── Dimenzije ─────────────────────────────────────────────────────────────
 SCREEN_W = 1500
@@ -94,15 +94,14 @@ class Button:
 
     def draw(self, surf, font):
         col = BTN_HOVER if self._hover else self.color
-        pygame.draw.rect(surf, col,    self.rect, border_radius=5)
-        pygame.draw.rect(surf, ACCENT, self.rect, 1, border_radius=5)
+        pygame.draw.rect(surf, col, self.rect, border_radius=7)
         txt = font.render(self.label, True, TEXT_MAIN)
         surf.blit(txt, txt.get_rect(center=self.rect.center))
 
 
 # ══════════════════════════════════════════════════════════════════════════
 class Slider:
-    H = 12
+    H = 10
 
     def __init__(self, x, y, w, label, vmin, vmax, value,
                  integer=False, locked=False):
@@ -120,7 +119,7 @@ class Slider:
             self._drag = False
             return
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            if self.rect.inflate(0, 14).collidepoint(event.pos):
+            if self.rect.inflate(0, 16).collidepoint(event.pos):
                 self._drag = True
         if event.type == pygame.MOUSEBUTTONUP:
             self._drag = False
@@ -134,26 +133,24 @@ class Slider:
         x, y, w  = self.rect.x, self.rect.y, self.rect.w
         disabled = self.locked and sim_running
         trk_col  = (16, 24, 36) if disabled else (28, 44, 66)
-        fil_col  = (36, 55, 82) if disabled else ACCENT
-        hdl_col  = TEXT_DIM    if disabled else (200, 228, 248)
+        fil_col  = (42, 65, 95) if disabled else ACCENT
+        hdl_col  = TEXT_DIM    if disabled else (210, 235, 255)
         val_col  = TEXT_DIM    if disabled else ACCENT
 
         val_str  = str(int(self.value)) if self.integer else f"{self.value:.2f}"
         val_surf = font.render(val_str, True, val_col)
         lh       = val_surf.get_height()
 
-        # Oznaka (levo) in vrednost (desno) nad drsnikom
         if self.label:
             lbl_surf = font.render(self.label, True, LABEL)
-            surf.blit(lbl_surf, (x, y - lh - 2))
-        surf.blit(val_surf, (x + w - val_surf.get_width(), y - lh - 2))
+            surf.blit(lbl_surf, (x, y - lh - 3))
+        surf.blit(val_surf, (x + w - val_surf.get_width(), y - lh - 3))
 
-        # Drsna letev
-        pygame.draw.rect(surf, trk_col, self.rect, border_radius=3)
+        pygame.draw.rect(surf, trk_col, self.rect, border_radius=4)
         pct = (self.value - self.vmin) / max(1e-9, self.vmax - self.vmin)
         fw  = int(pct * w)
         if fw > 0:
-            pygame.draw.rect(surf, fil_col, (x, y, fw, self.H), border_radius=3)
+            pygame.draw.rect(surf, fil_col, (x, y, fw, self.H), border_radius=4)
         pygame.draw.circle(surf, hdl_col, (x + fw, y + self.H // 2), 6)
 
 
@@ -174,14 +171,19 @@ class UI:
         self._sense_overlay = pygame.Surface((SIM_W, SIM_H), pygame.SRCALPHA)
 
         # ── y-pozicije elementov v NASTAVITVE stolpcu ─────────────────────
-        fh2  = FONT_H2.get_height()     # ~17
-        fsm  = FONT_SMALL.get_height()  # ~14
-        _hdr_span  = PY + fh2 + 11     # PY + naslov + (2 line + 9 spacing)
-        y_btn      = BOTTOM_Y + _hdr_span       # Start/Pause/Reset
-        y_ter_lbl  = y_btn + 36                 # "Teren:" label
-        y_ter      = y_ter_lbl + fsm + 4        # terrain buttons
-        y_vis      = y_ter + 22 + 8             # Vizualizacija
-        self._y_hints = y_vis + 23 + 8          # WASD hints
+        fh2  = FONT_H2.get_height()
+        fsm  = FONT_SMALL.get_height()
+        fbd  = FONT_BODY.get_height()
+
+        _hdr_span = PY + fh2 + 11          # od BOTTOM_Y do konca naslova
+        y_btn     = BOTTOM_Y + _hdr_span   # Start/Pause/Reset
+        y_ter_lbl = y_btn + 36             # "Teren:" oznaka
+        y_ter     = y_ter_lbl + fsm + 4    # terrain gumbi
+        y_vis     = y_ter + 22 + 8         # Vizualizacija gumb
+
+        # Koruza drsnik (pod Vizualizacija gumbom, namesto WASD)
+        _y_kor_bar = y_vis + 23 + fsm + 18  # bar y (oznaka je lh+3 nad barom)
+        self._y_kor_bar = _y_kor_bar
 
         # ── NASTAVITVE gumbi ───────────────────────────────────────────────
         bw = (COL_W - PX * 2 - 8) // 3
@@ -199,14 +201,19 @@ class UI:
         self.btn_visual = Button(PX, y_vis, COL_W - PX*2, 23,
                                  "Vizualizacija: VKLOPLJENA", BTN_GREEN)
 
-        # ── Drsnik hitrosti (polna širina, med sim in spodnjim panelom) ───
+        # Koruza drsnik
+        self.slider_clover = Slider(
+            PX, _y_kor_bar, COL_W - PX*2,
+            "Koruza", 10, 300, cfg.initial_clovers, integer=True, locked=True)
+
+        # ── Drsnik hitrosti (polna širina) ─────────────────────────────────
         lbl_spd_w = FONT_SMALL.size("Hitrost simulacije")[0]
         self._lbl_spd_w = lbl_spd_w
         self.slider_speed = Slider(
             PX + lbl_spd_w + PX,
             SPEED_Y + 24,
             SCREEN_W - PX*3 - lbl_spd_w,
-            "", 0.2, 5.0, cfg.sim_speed)
+            "", 0.2, 15.0, cfg.sim_speed)
 
         # ── Drsnik mutacije (od COL_W, spodaj) ────────────────────────────
         self.slider_mutation = Slider(
@@ -214,10 +221,9 @@ class UI:
             SCREEN_W - COL_W - PX*2,
             "", 0.0, 0.5, cfg.mutation_chance)
 
-        # ── y prvega drsnika v fox/rabbit stolpcih ─────────────────────────
-        _badge_h = fsm + 9
-        _BPY0    = BOTTOM_Y + _hdr_span + _badge_h + 18 + (fsm + 2)
-        _BSTEP   = max(30, (BOT_H - (_BPY0 - BOTTOM_Y) - 14) // 7)
+        # ── Fox/rabbit: _BPY0 brez badge (samo header + mal razmika) ──────
+        _BPY0  = BOTTOM_Y + _hdr_span + 20  # brez badge – bliže naslovu
+        _BSTEP = max(30, (BOT_H - (_BPY0 - BOTTOM_Y) - 16) // 7)
 
         # ── Drsniki lisice (stolpec 2) ─────────────────────────────────────
         self.fox_sliders = [
@@ -290,6 +296,7 @@ class UI:
         running = sim.running
         self.slider_speed.handle(event)
         self.slider_mutation.handle(event)
+        self.slider_clover.handle(event, sim_running=running)
         for sl in self.fox_sliders:    sl.handle(event, sim_running=running)
         for sl in self.rabbit_sliders: sl.handle(event, sim_running=running)
 
@@ -317,6 +324,7 @@ class UI:
         cfg.rabbit_max_thirst   = rs[5].value
         cfg.rabbit_repro_drive  = rs[6].value
 
+        cfg.initial_clovers = int(self.slider_clover.value)
         cfg.sim_speed       = self.slider_speed.value
         cfg.mutation_chance = self.slider_mutation.value
 
@@ -332,7 +340,6 @@ class UI:
         self._draw_bottom_panel(sim)
         self._draw_mutation_bar()
 
-        # Razdelilne črte
         scr = self.screen
         pygame.draw.line(scr, BD2, (RIGHT_X, 0),       (RIGHT_X, SIM_H),        1)
         pygame.draw.line(scr, BD2, (RIGHT_X, GRAPH_H), (SCREEN_W, GRAPH_H),     1)
@@ -361,13 +368,13 @@ class UI:
                     r = int(rb.sense_radius)
                     if -r < sx < SIM_W + r and -r < sy < SIM_H + r:
                         pygame.draw.circle(self._sense_overlay,
-                                           (200, 200, 150, 38), (sx, sy), r, 1)
+                                           (200, 200, 150, 35), (sx, sy), r, 1)
                 for fx in sim.foxes:
                     sx, sy = int(fx.x - cfg.cam_x), int(fx.y - cfg.cam_y)
                     r = int(fx.sense_radius)
                     if -r < sx < SIM_W + r and -r < sy < SIM_H + r:
                         pygame.draw.circle(self._sense_overlay,
-                                           (255, 150, 50, 38), (sx, sy), r, 1)
+                                           (255, 150, 50, 35), (sx, sy), r, 1)
                 ss.blit(self._sense_overlay, (0, 0))
 
                 for rb in sim.rabbits: rb.draw(ss, cfg.cam_x, cfg.cam_y)
@@ -391,11 +398,12 @@ class UI:
         pygame.draw.rect(surf, CARD_A, (RIGHT_X, 0, RIGHT_W, GRAPH_H))
         _draw_hdr(surf, RIGHT_X+PX, PY, RIGHT_W-PX*2, "Graf populacije")
 
-        mx, mt, mb = 38, 26, 26
+        # Margins – brez legende, bolj prostoren graf
+        mx, mt, mb = 40, 28, 22
         px0 = RIGHT_X + mx
         py0 = mt
         pw  = RIGHT_W - mx - PX
-        ph  = GRAPH_H - mt - mb
+        ph  = GRAPH_H - mt - mb   # ~271 px
 
         pygame.draw.line(surf, TEXT_DIM, (px0, py0),    (px0,    py0+ph), 1)
         pygame.draw.line(surf, TEXT_DIM, (px0, py0+ph), (px0+pw, py0+ph), 1)
@@ -407,7 +415,7 @@ class UI:
         series = [
             (sim.history_fox,    GRAPH_FOX,    "Lisice"),
             (sim.history_rabbit, GRAPH_RABBIT, "Zajci"),
-            (sim.history_clover, GRAPH_CLOVER, "Detelje"),
+            (sim.history_clover, GRAPH_CLOVER, "Koruza"),
         ]
         all_vals = [v for s, _, _ in series for v in s]
         if not all_vals:
@@ -445,12 +453,6 @@ class UI:
         _text(surf, FONT_SMALL, "čas (koraki)",
               (px0 + pw//2 - 28, py0+ph+4), TEXT_DIM)
 
-        lx = px0 + 2
-        for _, color, name in series:
-            pygame.draw.line(surf, color, (lx, py0+10), (lx+12, py0+10), 2)
-            _text(surf, FONT_SMALL, name, (lx+15, py0+4), color)
-            lx += 72
-
     def _draw_y_ticks(self, surf, px0, py0, pw, ph, max_nice):
         for i in range(5):
             val = int(i * max_nice / 4)
@@ -459,14 +461,11 @@ class UI:
             lbl = FONT_SMALL.render(str(val), True, TEXT_DIM)
             surf.blit(lbl, (px0 - lbl.get_width() - 4, gy - lbl.get_height()//2))
 
-    # ── statistika (desno spodaj) ─────────────────────────────────────────
+    # ── statistika (desno spodaj) – kompaktna 2-vrstična oblika ──────────
     def _draw_stats_panel(self, sim):
         surf = self.screen
         pygame.draw.rect(surf, CARD_B, (RIGHT_X, GRAPH_H, RIGHT_W, STATS_H))
-        _draw_hdr(surf, RIGHT_X+PX, GRAPH_H+PY, RIGHT_W-PX*2, "Statistika")
-
-        y  = GRAPH_H + PY + FONT_H2.get_height() + 14
-        dy = 20
+        sy = _draw_hdr(surf, RIGHT_X+PX, GRAPH_H+PY, RIGHT_W-PX*2, "Statistika")
 
         n_fox    = len(sim.foxes)   if sim.running else 0
         n_rabbit = len(sim.rabbits) if sim.running else 0
@@ -474,35 +473,39 @@ class UI:
         step     = sim.tick         if sim.running else 0
         elapsed  = sim.elapsed      if sim.running else 0.0
 
-        rows = [
-            (f"Lisice :", f"{n_fox}",          GRAPH_FOX),
-            (f"Zajci :",  f"{n_rabbit}",        GRAPH_RABBIT),
-            (f"Detelje:", f"{n_clover}",        GRAPH_CLOVER),
-            (f"Korak :",  f"{step}",            TEXT_DIM),
-            (f"Čas :",    f"{elapsed:.0f} s",   TEXT_DIM),
-        ]
-        for lbl, val, col in rows:
-            _text(surf, FONT_BODY, lbl, (RIGHT_X+PX,    y), TEXT_DIM)
-            _text(surf, FONT_BODY, val, (RIGHT_X+PX+95, y), col)
-            y += dy
+        fh = FONT_BODY.get_height()
+        col_w = RIGHT_W // 3
 
-        y += 6
-        if not sim.running:
-            _draw_badge(surf, RIGHT_X+PX, y, "  ●  USTAVLJENA  ",
-                        (50, 18, 18), RED_COL)
-        elif sim.paused:
-            _draw_badge(surf, RIGHT_X+PX, y, "  ⏸  PAVZA  ",
-                        (50, 38, 14), ACCENT2)
-        else:
-            vis = "" if sim.show_visual else "  [brez vizualizacije]"
-            _draw_badge(surf, RIGHT_X+PX, y, f"  ▶  TEČE{vis}  ",
-                        (18, 60, 26), GREEN_COL)
+        # ── Vrstica 1: Lisice  Zajci  Koruza ──────────────────────────────
+        for i, (lbl, val, col) in enumerate([
+            ("Lisice",  str(n_fox),    GRAPH_FOX),
+            ("Zajci",   str(n_rabbit), GRAPH_RABBIT),
+            ("Koruza",  str(n_clover), GRAPH_CLOVER),
+        ]):
+            cx = RIGHT_X + PX + i * col_w
+            _text(surf, FONT_BODY, lbl, (cx, sy), TEXT_DIM)
+            lw = FONT_BODY.size(lbl)[0]
+            _text(surf, FONT_TITLE, val, (cx + lw + 8, sy - 1), col)
 
+        # ── Vrstica 2: Korak  Čas ─────────────────────────────────────────
+        sy2 = sy + fh + 10
+        for i, (lbl, val) in enumerate([
+            ("Korak",  str(step)),
+            ("Čas",    f"{elapsed:.0f} s"),
+        ]):
+            cx = RIGHT_X + PX + i * col_w
+            _text(surf, FONT_BODY, lbl, (cx, sy2), TEXT_DIM)
+            lw = FONT_BODY.size(lbl)[0]
+            _text(surf, FONT_BODY, val, (cx + lw + 8, sy2), LABEL)
+
+        # ── Trend (vrstica 3) ──────────────────────────────────────────────
         if sim.running:
             tt, tc = _population_trend(sim.history_rabbit)
             if tt:
-                _text(surf, FONT_BODY, f"Trend:    {tt}",
-                      (RIGHT_X+PX, y + dy + 2), tc)
+                sy3 = sy2 + fh + 8
+                _text(surf, FONT_SMALL, "Trend zajcev:", (RIGHT_X+PX, sy3), TEXT_DIM)
+                tw = FONT_SMALL.size("Trend zajcev:")[0]
+                _text(surf, FONT_SMALL, tt, (RIGHT_X + PX + tw + 8, sy3), tc)
 
     # ── pas hitrosti simulacije ───────────────────────────────────────────
     def _draw_speed_bar(self):
@@ -521,20 +524,18 @@ class UI:
         pygame.draw.rect(surf, CARD_C,  (COL2_X, BOTTOM_Y, COL_W,           BOT_H))
         pygame.draw.rect(surf, CARD_A,  (COL3_X, BOTTOM_Y, SCREEN_W-COL3_X, BOT_H))
 
-        # ── Stolpec 1: NASTAVITVE (naslov centriran) ───────────────────────
-        s = FONT_H2.render("EKOSISTEM SIMULACIJA", True, ACCENT)
-        tx = COL_W//2 - s.get_width()//2
+        # ── Stolpec 1: NASTAVITVE ──────────────────────────────────────────
+        s  = FONT_H2.render("EKOSISTEM SIMULACIJA", True, ACCENT)
+        tx = COL_W // 2 - s.get_width() // 2
         surf.blit(s, (tx, BOTTOM_Y + PY))
         lh = s.get_height()
         pygame.draw.line(surf, ACCENT,
-                         (PX, BOTTOM_Y+PY+lh+2),
-                         (COL_W-PX, BOTTOM_Y+PY+lh+2), 1)
+                         (PX, BOTTOM_Y+PY+lh+2), (COL_W-PX, BOTTOM_Y+PY+lh+2), 1)
 
         for b in (self.btn_start, self.btn_pause, self.btn_reset):
             b.draw(surf, FONT_BODY)
 
-        _text(surf, FONT_SMALL, "Teren:",
-              (PX, self._y_ter_lbl), LABEL)
+        _text(surf, FONT_SMALL, "Teren:", (PX, self._y_ter_lbl), LABEL)
         for btn in self.terrain_btns:
             btn.draw(surf, FONT_SMALL)
         active_r = self.terrain_btns[self.cfg.terrain_type - 1].rect
@@ -542,28 +543,22 @@ class UI:
 
         self.btn_visual.draw(surf, FONT_SMALL)
 
-        _text(surf, FONT_SMALL, "WASD / ↑↓←→   pomik kamere",
-              (PX, self._y_hints),      LABEL)
-        _text(surf, FONT_SMALL, "ESC   izhod",
-              (PX, self._y_hints + 15), LABEL)
+        # Koruza drsnik
+        self.slider_clover.draw(surf, FONT_SMALL, sim_running=running)
 
-        # ── Stolpec 2: Lastnosti lisice ────────────────────────────────────
-        ny2 = _draw_hdr(surf, COL2_X+PX, BOTTOM_Y+PY, COL_W-PX*2,
-                        "Lastnosti lisice  (plenilec)", GRAPH_FOX)
-        _draw_badge(surf, COL2_X+PX, ny2,
-                    " 🔒 omejeno med izvajanjem ", (42,28,28), (160,100,100))
+        # ── Stolpec 2: Lastnosti lisice (brez badge) ───────────────────────
+        _draw_hdr(surf, COL2_X+PX, BOTTOM_Y+PY, COL_W-PX*2,
+                  "Lastnosti lisice  (plenilec)", GRAPH_FOX)
         for sl in self.fox_sliders:
             sl.draw(surf, FONT_SMALL, sim_running=running)
 
-        # ── Stolpec 3: Lastnosti zajca ─────────────────────────────────────
-        ny3 = _draw_hdr(surf, COL3_X+PX, BOTTOM_Y+PY, COL_W-PX*2,
-                        "Lastnosti zajca  (plen)", GRAPH_RABBIT)
-        _draw_badge(surf, COL3_X+PX, ny3,
-                    " 🔒 omejeno med izvajanjem ", (42,28,28), (160,100,100))
+        # ── Stolpec 3: Lastnosti zajca (brez badge) ────────────────────────
+        _draw_hdr(surf, COL3_X+PX, BOTTOM_Y+PY, COL_W-PX*2,
+                  "Lastnosti zajca  (plen)", GRAPH_RABBIT)
         for sl in self.rabbit_sliders:
             sl.draw(surf, FONT_SMALL, sim_running=running)
 
-    # ── pas mutacije (polna širina, spodaj) ───────────────────────────────
+    # ── pas mutacije ──────────────────────────────────────────────────────
     def _draw_mutation_bar(self):
         surf = self.screen
         pygame.draw.rect(surf, CARD_C, (0, MUT_Y, SCREEN_W, MUT_H))
@@ -597,7 +592,6 @@ def _text(surf, font, txt, pos, color=TEXT_MAIN):
 
 
 def _draw_hdr(surf, x, y, w, label, col=ACCENT, font=None, center_in=None):
-    """Nariše stolpčni naslov s podčrto. Vrne y po naslovu."""
     if font is None:
         font = FONT_H2
     s  = font.render(label, True, col)
@@ -608,20 +602,7 @@ def _draw_hdr(surf, x, y, w, label, col=ACCENT, font=None, center_in=None):
     return y + lh + 9
 
 
-def _draw_badge(surf, x, y, text, bg, fg, font=None):
-    """Nariše obarvano nalepko."""
-    if font is None:
-        font = FONT_SMALL
-    s  = font.render(text, True, fg)
-    tw = s.get_width() + 16
-    th = s.get_height() + 7
-    pygame.draw.rect(surf, bg, (x, y, tw, th), border_radius=th//2)
-    surf.blit(s, (x+8, y+3))
-    return tw, th
-
-
 def _population_trend(history):
-    """Vrne (besedilo, barva) glede na trend zajcev."""
     if len(history) < 10:
         return None, None
     recent = sum(history[-5:]) / 5
