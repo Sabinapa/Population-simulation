@@ -1,7 +1,5 @@
-"""
-Ekosistem simulacija: Lisica (plenilec) – Zajec (plen) – Detelja (hrana)
-Zagon:  cd vaja4 && python main.py
-"""
+
+#Ekosistem simulacija: Lisica (plenilec) – Zajec (plen) – Radic (hrana)
 
 import pygame
 import sys
@@ -13,7 +11,7 @@ from entities import Fox, Rabbit, Clover
 from ui       import UI
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════════
 def main():
     pygame.init()
     pygame.display.set_caption("Ekosistem Simulacija")
@@ -45,7 +43,7 @@ def main():
 
 # ══════════════════════════════════════════════════════════════════════════════
 class Simulation:
-    """Jedro simulacije – drži teren, seznam bitij in časovnik."""
+    #Jedro simulacije – drži teren, seznam bitij in časovnik.
 
     def __init__(self, cfg: "Config", ui: "UI"):
         self.cfg         = cfg
@@ -78,7 +76,7 @@ class Simulation:
 
         land = self.terrain.land_cells()
 
-        # Detelje
+        # Radic
         chosen = random.sample(land, min(cfg.initial_clovers, len(land)))
         for r, c in chosen:
             self.clovers.append(Clover(

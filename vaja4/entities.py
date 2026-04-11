@@ -1,23 +1,14 @@
-"""
-entities.py – razredi za vse entitete v simulaciji.
 
-Hierarhija:
-    Entity (bazni razred)
-    ├── Animal
-    │   ├── Fox    (plenilec)
-    │   └── Rabbit (plen)
-    └── Clover     (hrana za zajce)
-"""
+# entities.py – razredi za vse entitete v simulaciji. lisice, zajci, radic, ...
+
 
 import math
 import random
 import pygame
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Pomožna matematika
-# ══════════════════════════════════════════════════════════════════════════════
 
+# Pomožna matematika
 def _dist(ax, ay, bx, by):
     return math.hypot(bx - ax, by - ay)
 
@@ -41,11 +32,7 @@ def _inherit(v_a: float, v_b: float, cfg) -> float:
     base = _mutate(base, cfg)
     return base
 
-
-# ══════════════════════════════════════════════════════════════════════════════
 # Bazni razred
-# ══════════════════════════════════════════════════════════════════════════════
-
 class Entity:
     def __init__(self, x: float, y: float, cfg):
         self.x    = x
@@ -57,9 +44,7 @@ class Entity:
         pass
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Detelja (hrana)
-# ══════════════════════════════════════════════════════════════════════════════
+# Radic (hrana)
 
 class Clover(Entity):
     REGEN_TIME  = 20.0
@@ -87,10 +72,7 @@ class Clover(Entity):
             pygame.draw.circle(surface, self.COLOR, (sx, sy), 4)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 # Osnovna žival
-# ══════════════════════════════════════════════════════════════════════════════
-
 class Animal(Entity):
     """
     Skupne lastnosti in logika za vse živali.
@@ -150,7 +132,7 @@ class Animal(Entity):
             self.dead = True
 
     def _drink(self, terrain):
-        """Pije vodo ob robu vode (povečan doseg zaznavanja vode)."""
+        #Pije vodo ob robu vode (povečan doseg zaznavanja vode).
         nearest = terrain.nearest_water(self.x, self.y, max_dist=self.cfg.CELL * 4)
         if nearest:
             wx, wy = nearest
@@ -196,7 +178,7 @@ class Animal(Entity):
         self._clamp(terrain)
 
     def _wander(self, dt, terrain):
-        """Naključno tavanje s pametnim obravnavanjem ovir."""
+        #Naključno tavanje s pametnim obravnavanjem ovir.
         self._wander_timer -= dt
         if self._wander_timer <= 0:
             angle          = random.uniform(0, 2 * math.pi)
@@ -230,7 +212,7 @@ class Animal(Entity):
         self.x = max(0, min(cfg.MAP_W - 1, self.x))
         self.y = max(0, min(cfg.MAP_H - 1, self.y))
 
-    # ── risanje ───────────────────────────────────────────────────────────
+    # ── risanje
 
     def _draw_base(self, surface, cam_x, cam_y, color, outline, sense_ring_color):
         sx = int(self.x - cam_x)
@@ -262,10 +244,7 @@ class Animal(Entity):
                          (bx, by + bar_h + 1, int(bar_w * (1 - self.hunger)), bar_h))
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 # Zajec (plen)
-# ══════════════════════════════════════════════════════════════════════════════
-
 class Rabbit(Animal):
     COLOR        = (220, 220, 200)
     OUTLINE      = (140, 130, 110)
@@ -419,10 +398,7 @@ class Rabbit(Animal):
         self._draw_base(surface, cam_x, cam_y, self.COLOR, self.OUTLINE, self.SENSE_RING)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 # Lisica (plenilec)
-# ══════════════════════════════════════════════════════════════════════════════
-
 class Fox(Animal):
     COLOR      = (220, 100, 30)
     OUTLINE    = (140,  60, 10)

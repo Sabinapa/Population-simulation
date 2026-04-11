@@ -1,7 +1,3 @@
-"""
-config.py – vse nastavljive vrednosti simulacije na enem mestu.
-UI lahko med izvajanjem spreminja vrednosti tega objekta.
-"""
 
 class Config:
     # ── okno ──────────────────────────────────────────────────────────────
