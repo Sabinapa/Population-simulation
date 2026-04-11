@@ -45,7 +45,7 @@ GRID_COL     = ( 30,  46,  74)
 
 # ── Dimenzije ─────────────────────────────────────────────────────────────
 SCREEN_W = 1500
-SCREEN_H = 900
+SCREEN_H = 950
 
 SIM_W    = 700
 RIGHT_W  = SCREEN_W - SIM_W   # 800
@@ -53,7 +53,7 @@ RIGHT_X  = SIM_W               # 700
 
 SPD_H    = 34
 MUT_H    = 34
-BOT_H    = 285                              # zmanjšan – spodnji panel nižji
+BOT_H    = 335                              # zmanjšan – spodnji panel nižji
 TOP_H    = SCREEN_H - SPD_H - BOT_H - MUT_H   # 547
 
 GRAPH_H  = int(TOP_H * 0.83)   # ~454
@@ -602,6 +602,55 @@ class UI:
 
         # Radič drsnik
         self.slider_clover.draw(surf, FONT_SMALL, sim_running=running)
+
+        # ── Povprečna statistika živali ────────────────────────────────────
+        y_avgs = self._y_kor_bar + Slider.H + 14
+
+        if sim.running and sim.foxes:
+            f_age    = sum(e.age    for e in sim.foxes) / len(sim.foxes)
+            f_size   = sum(e.size   for e in sim.foxes) / len(sim.foxes)
+            f_hunger = sum(e.hunger for e in sim.foxes) / len(sim.foxes) * 100
+            f_thirst = sum(e.thirst for e in sim.foxes) / len(sim.foxes) * 100
+        else:
+            f_age = f_size = f_hunger = f_thirst = 0.0
+
+        if sim.running and sim.rabbits:
+            r_age    = sum(e.age    for e in sim.rabbits) / len(sim.rabbits)
+            r_size   = sum(e.size   for e in sim.rabbits) / len(sim.rabbits)
+            r_hunger = sum(e.hunger for e in sim.rabbits) / len(sim.rabbits) * 100
+            r_thirst = sum(e.thirst for e in sim.rabbits) / len(sim.rabbits) * 100
+        else:
+            r_age = r_size = r_hunger = r_thirst = 0.0
+
+        lbl_col_w = 68
+        val_col_w = (COL_W - PX * 2 - lbl_col_w) // 2
+        x_fox = PX + lbl_col_w + val_col_w // 2
+        x_rab = PX + lbl_col_w + val_col_w + val_col_w // 2
+
+        col_hdr_f = FONT_SMALL.render("Lisica", True, GRAPH_FOX)
+        col_hdr_r = FONT_SMALL.render("Zajec",  True, GRAPH_RABBIT)
+        surf.blit(col_hdr_f, (x_fox - col_hdr_f.get_width() // 2, y_avgs))
+        surf.blit(col_hdr_r, (x_rab - col_hdr_r.get_width() // 2, y_avgs))
+        y_avgs += col_hdr_f.get_height() + 3
+
+        row_h = FONT_SMALL.get_height() + 3
+        for row_lbl, fv, rv, is_pct in [
+            ("Starost",  f_age,    r_age,    False),
+            ("Velikost", f_size,   r_size,   False),
+            ("Lakota",   f_hunger, r_hunger, True),
+            ("Žeja",     f_thirst, r_thirst, True),
+        ]:
+            ls = FONT_SMALL.render(row_lbl + ":", True, TEXT_DIM)
+            surf.blit(ls, (PX, y_avgs))
+
+            fstr = f"{fv:.0f}%" if is_pct else f"{fv:.1f}"
+            rstr = f"{rv:.0f}%" if is_pct else f"{rv:.1f}"
+
+            fvs = FONT_SMALL.render(fstr, True, GRAPH_FOX)
+            rvs = FONT_SMALL.render(rstr, True, GRAPH_RABBIT)
+            surf.blit(fvs, (x_fox - fvs.get_width() // 2, y_avgs))
+            surf.blit(rvs, (x_rab - rvs.get_width() // 2, y_avgs))
+            y_avgs += row_h
 
         # ── Stolpec 2: Lastnosti lisice (brez badge) ───────────────────────
         _draw_hdr(surf, COL2_X+PX, BOTTOM_Y+PY, COL_W-PX*2,
