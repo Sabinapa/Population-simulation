@@ -1,20 +1,3 @@
-"""
-ui.py – celoten uporabniški vmesnik
-
-Razporeditev zaslona (1500 × 900):
-  +------SIM_W=700------+------RIGHT_W=800------+
-  |                     |        GRAF            | ← h=GRAPH_H=321
-  |   SIMULACIJA        +------------------------+
-  |   (700 × 494)       |     STATISTIKA         | ← h=STATS_H=173
-  +---------------------+------------------------+ ← y=494
-  |         DRSNIK HITROST SIMULACIJE            | ← h=38
-  +-COL_W=500-+-COL_W=500-+-COL_W=500-----------+ ← y=532
-  | NASTAVITVE | LISICA    | ZAJEC               | ← h=330
-  +------------+-----------+---------------------+ ← y=862
-  |              DRSNIK MUTACIJA                 | ← h=38
-  +---------------------------------------------+ ← y=900
-"""
-
 import pygame
 import math
 from config import Config
@@ -24,7 +7,6 @@ BG       = ( 11,  16,  24)
 CARD_A   = ( 18,  26,  42)
 CARD_B   = ( 22,  33,  53)
 CARD_C   = ( 14,  20,  33)
-BD       = ( 34,  52,  82)
 BD2      = ( 48,  72, 108)
 ACCENT   = ( 82, 182, 238)
 TEXT_MAIN   = (215, 232, 250)
@@ -38,10 +20,7 @@ BTN_GREY    = ( 55,  62,  72)
 GRAPH_FOX    = (215,  62,  62)
 GRAPH_RABBIT = (232, 232, 232)
 GRAPH_CLOVER = (155,  75, 210)   # RADIČ – vijolična
-GREEN_COL    = ( 88, 228, 108)
-RED_COL      = (225,  80,  65)
-ACCENT2      = (235, 125,  45)
-GRID_COL     = ( 30,  46,  74)
+
 
 # ── Dimenzije ─────────────────────────────────────────────────────────────
 SCREEN_W = 1500
@@ -53,7 +32,7 @@ RIGHT_X  = SIM_W               # 700
 
 SPD_H    = 34
 MUT_H    = 34
-BOT_H    = 335                              # zmanjšan – spodnji panel nižji
+BOT_H    = 335
 TOP_H    = SCREEN_H - SPD_H - BOT_H - MUT_H   # 547
 
 GRAPH_H  = int(TOP_H * 0.83)   # ~454
@@ -181,7 +160,6 @@ class UI:
         y_ter     = y_ter_lbl + fsm + 4    # terrain gumbi
         y_vis     = y_ter + 22 + 8         # Vizualizacija gumb
 
-        # Koruza drsnik (pod Vizualizacija gumbom, namesto WASD)
         _y_kor_bar = y_vis + 23 + fsm + 18  # bar y (oznaka je lh+3 nad barom)
         self._y_kor_bar = _y_kor_bar
 
@@ -221,7 +199,7 @@ class UI:
             SCREEN_W - COL_W - PX*2,
             "", 0.0, 0.5, cfg.mutation_chance, locked=True)
 
-        # ── Fox/rabbit: _BPY0 brez badge (samo header + mal razmika) ──────
+        # ── Fox/rabbit:
         _BPY0  = BOTTOM_Y + _hdr_span + 20  # brez badge – bliže naslovu
         _BSTEP = max(30, (BOT_H - (_BPY0 - BOTTOM_Y) - 16) // 7)
 
@@ -414,10 +392,10 @@ class UI:
 
         # Robovi: levo za y-oznake, zgoraj pod naslovno vrstico,
         # spodaj za x-oznake + napis osi, desno za vrednostne labele
-        mx = 54           # levo  – dovolj za "300", "1200" …
-        mt = 48           # zgoraj – pod header linijo
-        mb = fsm_h * 2 + 12   # spodaj – vrstica za tick številke + vrstica za "čas"
-        mr = 76           # desno  – za "999 Radič"
+        mx = 54           # levo
+        mt = 48           # zgoraj
+        mb = fsm_h * 2 + 12   # spodaj
+        mr = 76           # desno
 
         px0 = RIGHT_X + mx
         py0 = mt
@@ -518,16 +496,7 @@ class UI:
             val_s = FONT_SMALL.render(f"{int(data[-1])}  {name}", True, color)
             surf.blit(val_s, (dot_x, label_y))
 
-    def _draw_y_ticks(self, surf, px0, py0, pw, ph, max_nice):
-        """Ohranjena za morebitno zunanja klica – zdaj notranje ni več v uporabi."""
-        for i in range(6):
-            val = int(i * max_nice / 5)
-            gy  = py0 + ph - int(i / 5 * ph)
-            pygame.draw.line(surf, (20, 32, 52), (px0, gy), (px0 + pw, gy), 1)
-            lbl = FONT_SMALL.render(str(val), True, (110, 150, 190))
-            surf.blit(lbl, (px0 - lbl.get_width() - 7, gy - FONT_SMALL.get_height() // 2))
-
-    # ── statistika (desno spodaj) – kompaktna 2-vrstična oblika ──────────
+    # ── statistika (desno spodaj) ──────────
     def _draw_stats_panel(self, sim):
         surf = self.screen
         pygame.draw.rect(surf, CARD_B, (RIGHT_X, GRAPH_H, RIGHT_W, STATS_H))
@@ -707,15 +676,3 @@ def _draw_hdr(surf, x, y, w, label, col=ACCENT, font=None, center_in=None):
     pygame.draw.line(surf, col, (x, y+lh+2), (x+w, y+lh+2), 1)
     return y + lh + 9
 
-
-def _population_trend(history):
-    if len(history) < 10:
-        return None, None
-    recent = sum(history[-5:]) / 5
-    prev   = sum(history[-10:-5]) / 5
-    if recent < 2:
-        return "IZUMIRANJE !", RED_COL
-    ratio = (recent - prev) / max(prev, 1.0)
-    if   ratio >  0.08: return "RASTE  ↑",   GREEN_COL
-    elif ratio < -0.08: return "UPADA  ↓",   RED_COL
-    else:               return "STABILNO →", ACCENT
