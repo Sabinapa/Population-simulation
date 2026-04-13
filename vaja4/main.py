@@ -1,6 +1,5 @@
 
-#Ekosistem simulacija: Lisica (plenilec) – Zajec (plen) – Radic (hrana)
-
+# Ekosistem simulacija: Lisica (plenilec) – Zajec (plen) – Radič (hrana)
 
 import pygame
 import sys
@@ -12,7 +11,6 @@ from entities import Fox, Rabbit, Clover
 from ui       import UI
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
 def main():
     pygame.init()
     pygame.display.set_caption("Ekosistem Simulacija")
@@ -20,7 +18,7 @@ def main():
     cfg = Config()
     ui  = UI(cfg)
     sim = Simulation(cfg, ui)
-    sim.preview_terrain()   # pokaži teren takoj ob zagonu
+    sim.preview_terrain()   # pokaži teren takoj ob zagonu, še preden uporabnik pritisne Start
 
     clock = pygame.time.Clock()
     while True:
@@ -42,18 +40,17 @@ def main():
         pygame.display.flip()
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 class Simulation:
-    #Jedro simulacije – drži teren, seznam bitij in časovnik.
+    """Jedro simulacije – drži teren, seznam bitij in časovnik."""
 
     def __init__(self, cfg: "Config", ui: "UI"):
         self.cfg         = cfg
         self.ui          = ui
         self.running     = False
         self.paused      = False
-        self.show_visual = True    # ko False: simulacija teče, vizualizacija izklopljena
+        self.show_visual = True    # ko False: simulacija teče brez risanja bitij
         self.tick        = 0
-        self.elapsed     = 0.0
+        self.elapsed     = 0.0    # skupni pretečeni čas (skaliran s sim_speed)
 
         self.terrain : Terrain       = None
         self.foxes   : list[Fox]     = []
@@ -67,7 +64,7 @@ class Simulation:
         self.births_fox    = 0
         self.births_rabbit = 0
 
-    # ── zagon ─────────────────────────────────────────────────────────────
+    # Zagon
     def start(self):
         cfg = self.cfg
         self.terrain = Terrain(cfg)
@@ -80,7 +77,7 @@ class Simulation:
 
         land = self.terrain.land_cells()
 
-        # Radic
+        # Razporedi radič naključno po kopnih celicah
         chosen = random.sample(land, min(cfg.initial_clovers, len(land)))
         for r, c in chosen:
             self.clovers.append(Clover(
@@ -88,7 +85,7 @@ class Simulation:
                 r * cfg.CELL + cfg.CELL // 2,
                 cfg))
 
-        # Zajci
+        # Razporedi zajce – enakomerno M/F
         spawn = random.sample(land, min(cfg.initial_rabbits, len(land)))
         for i, (r, c) in enumerate(spawn):
             rb = Rabbit(
@@ -96,10 +93,10 @@ class Simulation:
                 r * cfg.CELL + cfg.CELL // 2,
                 "M" if i % 2 == 0 else "F",
                 cfg)
-            rb.newborn_timer = 0.0
+            rb.newborn_timer = 0.0   # začetne živali niso novorojene
             self.rabbits.append(rb)
 
-        # Lisice
+        # Razporedi lisice – enakomerno M/F
         spawn = random.sample(land, min(cfg.initial_foxes, len(land)))
         for i, (r, c) in enumerate(spawn):
             fx = Fox(
@@ -107,7 +104,7 @@ class Simulation:
                 r * cfg.CELL + cfg.CELL // 2,
                 "M" if i % 2 == 0 else "F",
                 cfg)
-            fx.newborn_timer = 0.0
+            fx.newborn_timer = 0.0   # začetne živali niso novorojene
             self.foxes.append(fx)
 
         self.tick    = 0
@@ -122,35 +119,37 @@ class Simulation:
         self.births_fox    = 0
         self.births_rabbit = 0
 
-    # ── predogled terena (pred zagonom) ───────────────────────────────────
+    # Predogled terena (pred zagonom)
     def preview_terrain(self):
         self.terrain   = Terrain(self.cfg)
         self.cfg.cam_x = 0
         self.cfg.cam_y = 0
 
-    # ── posodabljanje ─────────────────────────────────────────────────────
+    # Posodabljanje
     def update(self, dt: float):
+        # elapsed se skalira s sim_speed, tick je realni kader
         self.elapsed += dt * self.cfg.sim_speed
         self.tick    += 1
 
         terrain = self.terrain
         cfg     = self.cfg
 
-        # Detelje
+        # Radič se ne premika, update je prazen (rezervirano za morebitno rast)
         for cl in self.clovers[:]:
             cl.update(dt, terrain, self.clovers)
 
-        # Zajci
+        # Zajci – zbiramo novorojene v ločen seznam, da ne iteriramo čez nove
         new_rabbits = []
         for rb in self.rabbits[:]:
             rb.update(dt, terrain, self.foxes, self.rabbits, self.clovers, new_rabbits)
             if rb.dead:
                 self.rabbits.remove(rb)
+        # Dodaj novorojene, a ne prekoračuj populacijskega limita
         added_rabbits = new_rabbits[:max(0, cfg.max_rabbits - len(self.rabbits))]
         self.rabbits.extend(added_rabbits)
         self.births_rabbit += len(added_rabbits)
 
-        # Lisice
+        # Lisice – enaka logika kot zajci
         new_foxes = []
         for fx in self.foxes[:]:
             fx.update(dt, terrain, self.foxes, self.rabbits, new_foxes)
@@ -160,22 +159,21 @@ class Simulation:
         self.foxes.extend(added_foxes)
         self.births_fox += len(added_foxes)
 
-        # Statistike (vsake 30 korakov) – radič: samo aktivni (nepojedi)
+        # Vzorčenje zgodovine vsake 30 korakov; radič štejemo samo aktivne (nepojede)
         if self.tick % 30 == 0:
             self.history_fox.append(len(self.foxes))
             self.history_rabbit.append(len(self.rabbits))
             active_clovers = sum(1 for c in self.clovers if not c.eaten)
             self.history_clover.append(active_clovers)
+            # Omejimo historiko na 200 točk, da ne zasedamo pomnilnika
             for lst in (self.history_fox, self.history_rabbit, self.history_clover):
                 if len(lst) > 200:
                     lst.pop(0)
-        # Radič se ne obnavlja in ne dodaja – hrana samo upada
 
-        # Samodejni premor ko nimamo več lisic IN zajcev
+        # Samodejni premor, ko izumrejo vse živali
         if len(self.foxes) == 0 and len(self.rabbits) == 0:
             self.paused = True
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 if __name__ == "__main__":
     main()

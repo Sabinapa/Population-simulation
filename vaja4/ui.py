@@ -2,7 +2,7 @@ import pygame
 import math
 from config import Config
 
-# ── Barve ─────────────────────────────────────────────────────────────────
+# Barve vmesnika
 BG       = ( 11,  16,  24)
 CARD_A   = ( 18,  26,  42)
 CARD_B   = ( 22,  33,  53)
@@ -22,7 +22,7 @@ GRAPH_RABBIT = (232, 232, 232)
 GRAPH_CLOVER = (155,  75, 210)   # RADIČ – vijolična
 
 
-# ── Dimenzije ─────────────────────────────────────────────────────────────
+# Dimenzije zaslona in razpored področij
 SCREEN_W = 1500
 SCREEN_H = 950
 
@@ -147,9 +147,9 @@ class UI:
         FONT_SMALL = pygame.font.SysFont("segoeui", 12)
 
         self.sim_surface    = pygame.Surface((SIM_W, SIM_H))
-        self._sense_overlay = pygame.Surface((SIM_W, SIM_H), pygame.SRCALPHA)
+        self._sense_overlay = pygame.Surface((SIM_W, SIM_H), pygame.SRCALPHA)  # alfa kanal za prosojne obroče zaznavanja
 
-        # ── y-pozicije elementov v NASTAVITVE stolpcu ─────────────────────
+        # Y-pozicije elementov v NASTAVITVE stolpcu
         fh2  = FONT_H2.get_height()
         fsm  = FONT_SMALL.get_height()
         fbd  = FONT_BODY.get_height()
@@ -163,7 +163,7 @@ class UI:
         _y_kor_bar = y_vis + 23 + fsm + 18  # bar y (oznaka je lh+3 nad barom)
         self._y_kor_bar = _y_kor_bar
 
-        # ── NASTAVITVE gumbi ───────────────────────────────────────────────
+        # Gumbi za upravljanje simulacije
         bw = (COL_W - PX * 2 - 8) // 3
         self.btn_start = Button(PX,           y_btn, bw, 26, "▶ Start")
         self.btn_pause = Button(PX + bw + 4,  y_btn, bw, 26, "⏸ Pavza")
@@ -184,7 +184,7 @@ class UI:
             PX, _y_kor_bar, COL_W - PX*2,
             "Radič", 10, 500, cfg.initial_clovers, integer=True, locked=True)
 
-        # ── Drsnik hitrosti (polna širina) ─────────────────────────────────
+        # Drsnik hitrosti simulacije (polna širina, vedno odklenjen)
         lbl_spd_w = FONT_SMALL.size("Hitrost simulacije")[0]
         self._lbl_spd_w = lbl_spd_w
         self.slider_speed = Slider(
@@ -193,17 +193,17 @@ class UI:
             SCREEN_W - PX*3 - lbl_spd_w,
             "", 0.2, 15.0, cfg.sim_speed)
 
-        # ── Drsnik mutacije (od COL_W, spodaj) – zaklenjen med izvajanjem ──
+        # Drsnik mutacije – zaklenjen med izvajanjem, ker vpliva na novorojene
         self.slider_mutation = Slider(
             COL_W + PX, MUT_Y + 24,
             SCREEN_W - COL_W - PX*2,
             "", 0.0, 0.5, cfg.mutation_chance, locked=True)
 
-        # ── Fox/rabbit:
-        _BPY0  = BOTTOM_Y + _hdr_span + 20  # brez badge – bliže naslovu
+        # Drsniki lisice in zajca – razporejeni enakomerno v višino stolpca
+        _BPY0  = BOTTOM_Y + _hdr_span + 20
         _BSTEP = max(30, (BOT_H - (_BPY0 - BOTTOM_Y) - 16) // 7)
 
-        # ── Drsniki lisice (stolpec 2) ─────────────────────────────────────
+        # Drsniki lisice (stolpec 2)
         self.fox_sliders = [
             Slider(COL2_X+PX, _BPY0 + i*_BSTEP, COL_W-PX*2,
                    lbl, mn, mx, val, integer=intg, locked=True)
@@ -218,7 +218,7 @@ class UI:
             ])
         ]
 
-        # ── Drsniki zajca (stolpec 3) ──────────────────────────────────────
+        # Drsniki zajca (stolpec 3)
         self.rabbit_sliders = [
             Slider(COL3_X+PX, _BPY0 + i*_BSTEP, COL_W-PX*2,
                    lbl, mn, mx, val, integer=intg, locked=True)
@@ -327,7 +327,7 @@ class UI:
         pygame.draw.line(scr, BD2, (COL3_X, BOTTOM_Y), (COL3_X, MUT_Y),         1)
         pygame.draw.line(scr, BD2, (0, MUT_Y),         (SCREEN_W, MUT_Y),       1)
 
-    # ── simulacijska površina ─────────────────────────────────────────────
+    # Simulacijska površina (levo)
     def _draw_sim(self, sim):
         cfg = self.cfg
         ss  = self.sim_surface
@@ -382,7 +382,7 @@ class UI:
         pygame.draw.rect(ss, ACCENT, (0, 0, SIM_W, SIM_H), 1)
         self.screen.blit(ss, (0, 0))
 
-    # ── graf (desno zgoraj) ───────────────────────────────────────────────
+    # Graf populacije (desno zgoraj)
     def _draw_graph_panel(self, sim):
         surf = self.screen
         pygame.draw.rect(surf, CARD_A, (RIGHT_X, 0, RIGHT_W, GRAPH_H))
@@ -425,7 +425,7 @@ class UI:
         else:
             max_nice = max(10, math.ceil(max_v / 5) * 5)
 
-        # ── Y-os: mrežne črte + oznake ───────────────────────────────────
+        # Y-os: mrežne črte in oznake
         N_Y = 5
         for i in range(N_Y + 1):
             val = int(i * max_nice / N_Y)
@@ -438,7 +438,7 @@ class UI:
             lbl = FONT_SMALL.render(str(val), True, (110, 150, 190))
             surf.blit(lbl, (px0 - lbl.get_width() - 7, gy - fsm_h // 2))
 
-        # ── X-os: mrežne črte + oznake + napis osi ───────────────────────
+        # X-os: mrežne črte, oznake in napis osi
         n_data = max((len(s) for s, _, _ in series if s), default=2)
         n_xt   = min(7, max(1, n_data - 1))
         tick_y = py0 + ph + 6               # prva vrstica: številke
@@ -460,7 +460,7 @@ class UI:
         ax_lbl = FONT_SMALL.render("čas  (koraki)", True, (70, 100, 140))
         surf.blit(ax_lbl, (px0 + pw // 2 - ax_lbl.get_width() // 2, axis_y))
 
-        # ── Osi (robni črti) ──────────────────────────────────────────────
+        # Robni črti osi
         AX_COL = (55, 85, 130)
         pygame.draw.line(surf, AX_COL, (px0, py0),       (px0,       py0 + ph), 2)
         pygame.draw.line(surf, AX_COL, (px0, py0 + ph),  (px0 + pw,  py0 + ph), 2)
@@ -468,7 +468,7 @@ class UI:
         if not series:
             return
 
-        # ── Krivulje ──────────────────────────────────────────────────────
+        # Risanje krivulj in vrednostnih oznak desno od grafa
         dot_x  = px0 + pw + 8
         used_y = []
         for data, color, name in series:
@@ -496,7 +496,7 @@ class UI:
             val_s = FONT_SMALL.render(f"{int(data[-1])}  {name}", True, color)
             surf.blit(val_s, (dot_x, label_y))
 
-    # ── statistika (desno spodaj) ──────────
+    # Statistika – trenutne vrednosti populacij (desno spodaj)
     def _draw_stats_panel(self, sim):
         surf = self.screen
         pygame.draw.rect(surf, CARD_B, (RIGHT_X, GRAPH_H, RIGHT_W, STATS_H))
@@ -511,7 +511,7 @@ class UI:
         fh    = FONT_BODY.get_height()
         col_w = RIGHT_W // 3
 
-        # ── Vrstica 1: Lisice  Zajci  Radič ───────────────────────────────
+        # Vrstica 1: število lisic, zajcev in radiča
         for i, (lbl, val, col) in enumerate([
             ("Lisice",  str(n_fox),    GRAPH_FOX),
             ("Zajci",   str(n_rabbit), GRAPH_RABBIT),
@@ -522,7 +522,7 @@ class UI:
             lw = FONT_BODY.size(lbl)[0]
             _text(surf, FONT_TITLE, val, (cx + lw + 8, sy - 1), col)
 
-        # ── Vrstica 2: Korak  Čas ─────────────────────────────────────────
+        # Vrstica 2: trenutni korak in pretečeni čas
         sy2 = sy + fh + 10
         for i, (lbl, val) in enumerate([
             ("Korak",  str(step)),
@@ -533,7 +533,7 @@ class UI:
             lw = FONT_BODY.size(lbl)[0]
             _text(surf, FONT_BODY, val, (cx + lw + 8, sy2), LABEL)
 
-    # ── pas hitrosti simulacije ───────────────────────────────────────────
+    # Pas hitrosti simulacije (celotna širina, med simulacijo in spodnjim panelom)
     def _draw_speed_bar(self):
         surf = self.screen
         pygame.draw.rect(surf, CARD_C, (0, SPEED_Y, SCREEN_W, SPD_H))
@@ -541,7 +541,7 @@ class UI:
         surf.blit(lbl, (PX, SPEED_Y + SPD_H//2 - lbl.get_height()//2))
         self.slider_speed.draw(surf, FONT_SMALL)
 
-    # ── spodnji 3-stolpčni panel ──────────────────────────────────────────
+    # Spodnji panel razdeljen na 3 stolpce: nastavitve | lisica | zajec
     def _draw_bottom_panel(self, sim):
         surf    = self.screen
         running = sim.running
@@ -550,7 +550,7 @@ class UI:
         pygame.draw.rect(surf, CARD_C,  (COL2_X, BOTTOM_Y, COL_W,           BOT_H))
         pygame.draw.rect(surf, CARD_A,  (COL3_X, BOTTOM_Y, SCREEN_W-COL3_X, BOT_H))
 
-        # ── Stolpec 1: NASTAVITVE ──────────────────────────────────────────
+        # Stolpec 1: gumbi, teren, vizualizacija, radič, povprečna statistika
         for b in (self.btn_start, self.btn_pause, self.btn_reset):
             b.draw(surf, FONT_BODY)
 
@@ -565,7 +565,7 @@ class UI:
         # Radič drsnik
         self.slider_clover.draw(surf, FONT_SMALL, sim_running=running)
 
-        # ── Povprečna statistika živali ────────────────────────────────────
+        # Povprečna statistika živali – izračunamo sproti iz aktivnih bitij
         y_avgs = self._y_kor_bar + Slider.H + 14
 
         if sim.running and sim.foxes:
@@ -620,7 +620,7 @@ class UI:
             surf.blit(rvs, (x_rab - rvs.get_width() // 2, y_avgs))
             y_avgs += row_h
 
-        # ── Rojstva (skupaj od zagona) ──────────────────────────────────────
+        # Rojstva – skupno število novorojenih od zagona simulacije
         BIRTH_COLOR = (255, 140, 200)
         ls = FONT_SMALL.render("Rojstva:", True, BIRTH_COLOR)
         surf.blit(ls, (PX, y_avgs))
@@ -630,19 +630,19 @@ class UI:
         surf.blit(rvs, (x_rab - rvs.get_width() // 2, y_avgs))
         y_avgs += row_h
 
-        # ── Stolpec 2: Lastnosti lisice (brez badge) ───────────────────────
+        # Stolpec 2: drsniki lastnosti lisice
         _draw_hdr(surf, COL2_X+PX, BOTTOM_Y+PY, COL_W-PX*2,
                   "Lastnosti lisice  (plenilec)", GRAPH_FOX)
         for sl in self.fox_sliders:
             sl.draw(surf, FONT_SMALL, sim_running=running)
 
-        # ── Stolpec 3: Lastnosti zajca (brez badge) ────────────────────────
+        # Stolpec 3: drsniki lastnosti zajca
         _draw_hdr(surf, COL3_X+PX, BOTTOM_Y+PY, COL_W-PX*2,
                   "Lastnosti zajca  (plen)", GRAPH_RABBIT)
         for sl in self.rabbit_sliders:
             sl.draw(surf, FONT_SMALL, sim_running=running)
 
-    # ── pas mutacije ──────────────────────────────────────────────────────
+    # Pas mutacije (spodnja vrstica)
     def _draw_mutation_bar(self):
         surf = self.screen
         pygame.draw.rect(surf, CARD_C, (0, MUT_Y, SCREEN_W, MUT_H))
@@ -650,7 +650,7 @@ class UI:
         surf.blit(lbl, (PX, MUT_Y + MUT_H//2 - lbl.get_height()//2))
         self.slider_mutation.draw(surf, FONT_SMALL)
 
-    # ── premikanje kamere ─────────────────────────────────────────────────
+    # Premikanje kamere s tipkami WASD ali puščicami
     def _update_camera(self, sim):
         if not sim.running:
             return

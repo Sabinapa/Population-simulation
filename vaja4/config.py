@@ -1,11 +1,11 @@
 
 class Config:
-    # ── okno ──────────────────────────────────────────────────────────────
+    # Okno
     SCREEN_W    = 1500
     SCREEN_H    = 900
     FPS         = 60
 
-    # ── teren ─────────────────────────────────────────────────────────────
+    # Teren
     CELL        = 8          # velikost celice v pikslih
     GRID_W      = 120        # število celic po širini
     GRID_H      = 90         # število celic po višini
@@ -13,7 +13,7 @@ class Config:
     # 1=reka, 2=jezero, 3=delta, 4=dolina
     terrain_type = 1
 
-    # ── barve terena ──────────────────────────────────────────────────────
+    # Barve terena
     COLOR_WATER    = (45,  105, 190)
     COLOR_SAND     = (205, 190, 130)
     COLOR_GRASS    = (75,  155,  55)
@@ -21,7 +21,7 @@ class Config:
     COLOR_MOUNTAIN = (120, 112, 102)
     COLOR_PEAK     = (235, 238, 245)
 
-    # ── začetne populacije ────────────────────────────────────────────────
+    # Začetne populacije
     initial_foxes   = 8
     initial_rabbits = 30
     initial_clovers = 80
@@ -30,7 +30,7 @@ class Config:
     max_rabbits = 300
     max_clovers = 600
 
-    # ── lastnosti plenilca (lisica) ───────────────────────────────────────
+    # Lastnosti plenilca (lisica)
     fox_speed        = 55.0
     fox_size         = 12      # polmer v px
     fox_sense_radius = 90.0    # px
@@ -40,7 +40,7 @@ class Config:
     fox_repro_drive  = 0.65
     fox_variation    = 0.10
 
-    # ── lastnosti plena (zajec) ───────────────────────────────────────────
+    # Lastnosti plena (zajec)
     rabbit_speed        = 45.0
     rabbit_size         = 8       # polmer v px
     rabbit_sense_radius = 70.0
@@ -50,18 +50,18 @@ class Config:
     rabbit_repro_drive  = 0.60
     rabbit_variation    = 0.10
 
-    # ── mutacija ──────────────────────────────────────────────────────────
-    mutation_chance  = 0.10
-    mutation_amount  = 0.20
+    # Mutacija
+    mutation_chance  = 0.10    # verjetnost mutacije pri rojstvu (10 %)
+    mutation_amount  = 0.20    # največja sprememba vrednosti (±20 %)
 
-    # ── hitrost simulacije ────────────────────────────────────────────────
+    # Hitrost simulacije
     sim_speed = 1.0
 
-    # ── simulacijsko področje (levo zgoraj) ───────────────────────────────
+    # Simulacijsko področje (levo zgoraj)
     VIEW_W  = 700   # širina simulacijske površine v px
     VIEW_H  = 494   # višina simulacijske površine v px
 
-    # ── kamera ────────────────────────────────────────────────────────────
+    # Kamera
     cam_x   = 0
     cam_y   = 0
     cam_speed = 300

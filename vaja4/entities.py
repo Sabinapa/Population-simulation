@@ -1,14 +1,13 @@
 
-# entities.py – razredi za vse entitete v simulaciji. lisice, zajci, radic, ...
-
+# entities.py – razredi za vse entitete v simulaciji: lisice, zajci, radič
 
 import math
 import random
 import pygame
 
 
+# Pomožne matematične funkcije
 
-# Pomožna matematika
 def _dist(ax, ay, bx, by):
     return math.hypot(bx - ax, by - ay)
 
@@ -19,20 +18,24 @@ def _normalize(dx, dy):
     return dx / d, dy / d
 
 def _vary(base: float, variation: float) -> float:
+    """Naključno odstopa vrednost za ±variation (npr. 0.10 = ±10 %)."""
     return base * (1.0 + random.uniform(-variation, variation))
 
 def _mutate(value: float, cfg) -> float:
+    """Z verjetnostjo mutation_chance spremeni vrednost za ±mutation_amount."""
     if random.random() < cfg.mutation_chance:
         value *= 1.0 + random.uniform(-cfg.mutation_amount, cfg.mutation_amount)
     return value
 
 def _inherit(v_a: float, v_b: float, cfg) -> float:
+    """Potomec podeduje povprečje lastnosti obeh staršev, nato aplicira variacija in mutacija."""
     base = (v_a + v_b) / 2.0
     base = _vary(base, cfg.fox_variation)
     base = _mutate(base, cfg)
     return base
 
-# Bazni razred
+
+# Bazni razred za vse entitete
 class Entity:
     def __init__(self, x: float, y: float, cfg):
         self.x    = x
@@ -44,12 +47,11 @@ class Entity:
         pass
 
 
-# Radic (hrana)
-
+# Radič (hrana za zajce)
 class Clover(Entity):
     REGEN_TIME  = 20.0
-    COLOR       = (155, 75, 210)   # vijolična – radič
-    COLOR_EATEN = ( 80, 38, 118)   # prosojno vijolična – pojeden radič (~50 % prosojnost)
+    COLOR       = (155, 75, 210)   # vijolična
+    COLOR_EATEN = ( 80, 38, 118)   # temnejša vijolična – pojeden radič
 
     def __init__(self, x, y, cfg):
         super().__init__(x, y, cfg)
@@ -57,7 +59,7 @@ class Clover(Entity):
         self.regen_timer = 0.0
 
     def update(self, dt, terrain, clover_list):
-        pass   # radič se ne obnavlja – hrana samo upada
+        pass   # radič se ne obnavlja – zaloga samo upada
 
     def eat(self):
         self.eaten = True
@@ -66,22 +68,17 @@ class Clover(Entity):
         sx = int(self.x - cam_x)
         sy = int(self.y - cam_y)
         if self.eaten:
-            # Prikaži pojeden radič kot temno/prosojno piko
             pygame.draw.circle(surface, self.COLOR_EATEN, (sx, sy), 3)
         else:
             pygame.draw.circle(surface, self.COLOR, (sx, sy), 4)
 
 
-# Osnovna žival
+# Osnovna žival – skupna logika za lisico in zajca
 class Animal(Entity):
     """
-    Skupne lastnosti in logika za vse živali.
-
-    Prioritetna vrsta potreb:
-        1. Žeja
-        2. Lakota
-        3. Razmnoževanje
-        4. Brezdelno tavanje
+    Prioritetna vrsta potreb (od najpomembnejše):
+        Zajec:  beg → razmnoževanje → žeja → lakota → tavanje
+        Lisica: razmnoževanje → žeja → lov → tavanje
     """
 
     def __init__(self, x, y, gender: str, cfg,
@@ -94,6 +91,7 @@ class Animal(Entity):
         self.age    = 0.0
         self.dead   = False
 
+        # Lastnosti z variacijo ±variation od bazne vrednosti
         self.speed        = _vary(speed_base,  variation)
         self.size         = max(3, int(_vary(size_base, variation)))
         self.sense_radius = _vary(sense_base,  variation)
@@ -102,29 +100,31 @@ class Animal(Entity):
         self.max_age      = _vary(max_age,     variation)
         self.repro_drive  = repro_drive
 
-        self.hunger  = 0.0
-        self.thirst  = 0.0
-        self.repro   = 0.0
+        self.hunger  = 0.0   # 0.0 = sito, 1.0 = smrt
+        self.thirst  = 0.0   # 0.0 = napito, 1.0 = smrt
+        self.repro   = 0.0   # 0.0 = brez želje, repro_drive = prag za iskanje partnerja
 
-        self.repro_cooldown = random.uniform(20.0, 40.0)
+        self.repro_cooldown = random.uniform(20.0, 40.0)   # čakalna doba med paritvama
         self.newborn_timer  = 4.0   # sekunde rožnate barve ob rojstvu
 
         self._dir_x = random.choice([-1, 1]) * 1.0
         self._dir_y = random.choice([-1, 1]) * 1.0
         self._wander_timer = 0.0
 
+        # Hitrost porabe žeje narašča z večjo hitrostjo; lakote z večjo velikostjo
         self._thirst_rate = 1.0 / self.max_thirst * (1.0 + 0.3 * (self.speed / speed_base - 1))
         self._hunger_rate = 1.0 / self.max_hunger * (1.0 + 0.3 * (self.size  / size_base  - 1))
 
-    # ── splošna posodobitev ───────────────────────────────────────────────
-
+    # Splošna posodobitev (kliče se na začetku vsake update())
     def _base_update(self, dt, terrain):
         self.age          += dt
         self.newborn_timer = max(0.0, self.newborn_timer - dt * self.cfg.sim_speed)
+
+        # Ko je bitje lačno, se poveča potreba po vodi
         thirst_mult  = 1.0 + 0.5 * (self.hunger / self.max_hunger)
         self.thirst += dt * self._thirst_rate * self.cfg.sim_speed * thirst_mult
-        self.repro_cooldown = max(0.0, self.repro_cooldown - dt * self.cfg.sim_speed)
 
+        self.repro_cooldown = max(0.0, self.repro_cooldown - dt * self.cfg.sim_speed)
         self.hunger += dt * self._hunger_rate * self.cfg.sim_speed
 
         if self.repro_cooldown <= 0:
@@ -134,7 +134,7 @@ class Animal(Entity):
             self.dead = True
 
     def _drink(self, terrain):
-        #Pije vodo ob robu vode (povečan doseg zaznavanja vode).
+        """Pije vodo, ko je bitje dovolj blizu vodne celice."""
         nearest = terrain.nearest_water(self.x, self.y, max_dist=self.cfg.CELL * 4)
         if nearest:
             wx, wy = nearest
@@ -156,7 +156,6 @@ class Animal(Entity):
         new_x = self.x + nx * step
         new_y = self.y + ny * step
 
-        # Poskusi diagonalno gibanje
         if terrain.is_passable(new_x, new_y):
             self.x, self.y = new_x, new_y
         else:
@@ -180,7 +179,7 @@ class Animal(Entity):
         self._clamp(terrain)
 
     def _wander(self, dt, terrain):
-        #Naključno tavanje s pametnim obravnavanjem ovir.
+        """Naključno tavanje – vsake 1.5–4 s izbere novo smer."""
         self._wander_timer -= dt
         if self._wander_timer <= 0:
             angle          = random.uniform(0, 2 * math.pi)
@@ -214,18 +213,17 @@ class Animal(Entity):
         self.x = max(0, min(cfg.MAP_W - 1, self.x))
         self.y = max(0, min(cfg.MAP_H - 1, self.y))
 
-    # ── risanje
-
+    # Risanje
     def _draw_base(self, surface, cam_x, cam_y, color, outline, sense_ring_color):
         sx = int(self.x - cam_x)
         sy = int(self.y - cam_y)
 
-        # Krog zaznavanja (tanek obroč pred telesom)
+        # Obroč zaznavanja
         pygame.draw.circle(surface, sense_ring_color, (sx, sy), int(self.sense_radius), 1)
 
-        # Rožnata barva za novorojene živali
+        # Novorojene živali so rožnate – barva se postopno vrne na normalno
         if self.newborn_timer > 0:
-            t = self.newborn_timer / 4.0   # 1.0 → 0.0
+            t = self.newborn_timer / 4.0   # 1.0 ob rojstvu → 0.0 po 4s
             color   = (
                 int(color[0] * (1 - t) + 255 * t),
                 int(color[1] * (1 - t) + 105 * t),
@@ -237,19 +235,17 @@ class Animal(Entity):
         pygame.draw.circle(surface, color,   (sx, sy), self.size)
         pygame.draw.circle(surface, outline, (sx, sy), self.size, 1)
 
-        # Statusni trakovi nad bitjem
+        # Statusni trakovi nad bitjem: modra = žeja, rdeča = lakota
         bar_w = self.size * 2
         bar_h = 3
         bx    = sx - self.size
         by    = sy - self.size - 6
 
-        # Žeja (modra)
         pygame.draw.rect(surface, (25, 70, 190),
                          (bx, by, bar_w, bar_h))
         pygame.draw.rect(surface, (90, 175, 255),
                          (bx, by, int(bar_w * (1 - self.thirst)), bar_h))
 
-        # Lakota (rdeča)
         pygame.draw.rect(surface, (175, 25, 25),
                          (bx, by + bar_h + 1, bar_w, bar_h))
         pygame.draw.rect(surface, (255, 115, 75),
@@ -260,7 +256,7 @@ class Animal(Entity):
 class Rabbit(Animal):
     COLOR        = (220, 220, 200)
     OUTLINE      = (140, 130, 110)
-    SENSE_RING   = (200, 200, 155)   # barva obroča zaznavanja
+    SENSE_RING   = (200, 200, 155)
 
     def __init__(self, x, y, gender, cfg,
                  speed=None, size=None, sense=None,
@@ -278,20 +274,16 @@ class Rabbit(Animal):
             variation   = c.rabbit_variation,
         )
 
-    # ── update ────────────────────────────────────────────────────────────
-
     def update(self, dt, terrain, foxes, rabbits, clovers, new_rabbits: list):
         self._base_update(dt, terrain)
         if self.dead:
             return
 
-        # ── BEG pred lisicami (absolutna prioriteta – pred vsem) ──────────
+        # Beg pred lisicami je absolutna prioriteta
         if self._flee(foxes, dt, terrain):
             return
 
-        # ── PRIORITETA 1: razmnoževanje ───────────────────────────────────
-        # Ob veliki želji za razmnoževanje preneha iskati vodo in hrano.
-        # Blokira se samo pri kritični žeji/lakoti (tik pred smrtjo).
+        # Prioriteta 1: razmnoževanje – blokira se samo pri kritični žeji/lakoti
         if (self.repro >= self.repro_drive
                 and self.repro_cooldown <= 0
                 and self.thirst < 0.85
@@ -306,7 +298,7 @@ class Rabbit(Animal):
                 self._move_towards(partner.x, partner.y, dt, terrain)
                 return
 
-        # ── PRIORITETA 2: žeja ────────────────────────────────────────────
+        # Prioriteta 2: žeja
         if self.thirst > 0.45:
             water = terrain.nearest_water(self.x, self.y, 320)
             if water:
@@ -314,7 +306,7 @@ class Rabbit(Animal):
                 self._drink(terrain)
                 return
 
-        # ── PRIORITETA 3: lakota ──────────────────────────────────────────
+        # Prioriteta 3: lakota
         if self.hunger > 0.40:
             target = self._find_food(clovers)
             if target:
@@ -338,12 +330,13 @@ class Rabbit(Animal):
         return best
 
     def _find_partner(self, rabbits):
+        """Poišče najboljšega partnerja: prednost večjemu in bližjemu."""
         best, bd = None, self.sense_radius
         for rb in rabbits:
             if rb is self or rb.gender == self.gender or rb.repro_cooldown > 0 or rb.dead:
                 continue
             d     = _dist(self.x, self.y, rb.x, rb.y)
-            score = d / (rb.size + 1)
+            score = d / (rb.size + 1)   # manjši score = bliže in večji = boljši
             if score < bd:
                 bd, best = score, rb
         return best
@@ -367,19 +360,21 @@ class Rabbit(Animal):
             ))
 
     def _flee(self, foxes, dt, terrain) -> bool:
+        """Beži stran od vseh bližnjih lisic. Preveri, da ne beži k drugi lisici."""
         nearby = [fx for fx in foxes
                   if _dist(self.x, self.y, fx.x, fx.y) < self.sense_radius]
         if not nearby:
             return False
 
+        # Povprečni vektor stran od vseh bližnjih lisic
         avg_dx = sum(self.x - fx.x for fx in nearby)
         avg_dy = sum(self.y - fx.y for fx in nearby)
         ndx, ndy = _normalize(avg_dx, avg_dy)
 
-        # Preveri konflikt z oddaljeno lisico
+        # Preveri, da beg ne pelje naravnost k drugi oddaljenejši lisici
         tx, ty = self.x + ndx * 50, self.y + ndy * 50
         if any(_dist(tx, ty, fx.x, fx.y) < 30 for fx in foxes if fx not in nearby):
-            ndx, ndy = -ndy, ndx
+            ndx, ndy = -ndy, ndx   # zarotira smer za 90°
 
         step  = self.speed * 1.15 * dt * self.cfg.sim_speed
         new_x = self.x + ndx * step
@@ -414,7 +409,7 @@ class Rabbit(Animal):
 class Fox(Animal):
     COLOR      = (220, 100, 30)
     OUTLINE    = (140,  60, 10)
-    SENSE_RING = (255, 150, 55)   # barva obroča zaznavanja
+    SENSE_RING = (255, 150, 55)
 
     def __init__(self, x, y, gender, cfg,
                  speed=None, size=None, sense=None,
@@ -432,16 +427,12 @@ class Fox(Animal):
             variation   = c.fox_variation,
         )
 
-    # ── update ────────────────────────────────────────────────────────────
-
     def update(self, dt, terrain, foxes, rabbits, new_foxes: list):
         self._base_update(dt, terrain)
         if self.dead:
             return
 
-        # ── PRIORITETA 1: razmnoževanje ───────────────────────────────────
-        # Ob veliki želji za razmnoževanje preneha iskati vodo in hrano.
-        # Blokira se samo pri kritični žeji/lakoti (tik pred smrtjo).
+        # Prioriteta 1: razmnoževanje – blokira se samo pri kritični žeji/lakoti
         if (self.repro >= self.repro_drive
                 and self.repro_cooldown <= 0
                 and self.thirst < 0.85
@@ -456,7 +447,7 @@ class Fox(Animal):
                 self._move_towards(partner.x, partner.y, dt, terrain)
                 return
 
-        # ── PRIORITETA 2: žeja ────────────────────────────────────────────
+        # Prioriteta 2: žeja
         if self.thirst > 0.45:
             water = terrain.nearest_water(self.x, self.y, 380)
             if water:
@@ -464,7 +455,7 @@ class Fox(Animal):
                 self._drink(terrain)
                 return
 
-        # ── PRIORITETA 3: lov ─────────────────────────────────────────────
+        # Prioriteta 3: lov
         if self.hunger > 0.30:
             prey = self._find_best_prey(rabbits)
             if prey:
@@ -478,6 +469,10 @@ class Fox(Animal):
         self._wander(dt, terrain)
 
     def _find_best_prey(self, rabbits):
+        """
+        Oceni vsak dostopni zajec z: razdalja / (velikost × hitrostni_faktor).
+        Nižji score = bliže, večji in počasnejši zajec = boljši plen.
+        """
         best, best_score = None, float("inf")
         for rb in rabbits:
             if rb.dead:
@@ -485,19 +480,20 @@ class Fox(Animal):
             d = _dist(self.x, self.y, rb.x, rb.y)
             if d > self.sense_radius:
                 continue
-            speed_factor = self.speed / max(rb.speed, 1.0)
+            speed_factor = self.speed / max(rb.speed, 1.0)   # večji = lažje ujamemo
             score        = d / (rb.size * speed_factor + 1e-9)
             if score < best_score:
                 best_score, best = score, rb
         return best
 
     def _find_partner(self, foxes):
+        """Poišče najboljšega partnerja: prednost večjemu in bližjemu."""
         best, bd = None, self.sense_radius
         for fx in foxes:
             if fx is self or fx.gender == self.gender or fx.repro_cooldown > 0 or fx.dead:
                 continue
             d     = _dist(self.x, self.y, fx.x, fx.y)
-            score = d / (fx.size + 1)
+            score = d / (fx.size + 1)   # manjši score = bliže in večji = boljši
             if score < bd:
                 bd, best = score, fx
         return best

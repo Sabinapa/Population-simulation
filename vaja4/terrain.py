@@ -37,7 +37,7 @@ class Terrain:
         self._generate(cfg.terrain_type)
         self._bake_surface()
 
-    # ── generatorji ───────────────────────────────────────────────────────
+    # Generatorji terenov
 
     def _generate(self, terrain_type: int):
         t = terrain_type
@@ -237,7 +237,7 @@ class Terrain:
                             g[r, c] = SAND
                             break
 
-    # ── pomožne funkcije ──────────────────────────────────────────────────
+    # Pomožne funkcije za generiranje
 
     def _scatter_type(self, cell_type: int, density: float):
         g = self.grid
@@ -268,7 +268,7 @@ class Terrain:
         self._generate(self.cfg.terrain_type)
         self._bake_surface()
 
-    # ── poizvedbe ─────────────────────────────────────────────────────────
+    # Poizvedbe – kličejo jih entitete pri vsakem koraku
 
     def is_water(self, px: float, py: float) -> bool:
         r, c = self._px_to_rc(px, py)
