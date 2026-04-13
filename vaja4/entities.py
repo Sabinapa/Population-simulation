@@ -107,6 +107,7 @@ class Animal(Entity):
         self.repro   = 0.0
 
         self.repro_cooldown = random.uniform(20.0, 40.0)
+        self.newborn_timer  = 4.0   # sekunde rožnate barve ob rojstvu
 
         self._dir_x = random.choice([-1, 1]) * 1.0
         self._dir_y = random.choice([-1, 1]) * 1.0
@@ -118,15 +119,16 @@ class Animal(Entity):
     # ── splošna posodobitev ───────────────────────────────────────────────
 
     def _base_update(self, dt, terrain):
-        self.age    += dt
-        self.thirst += dt * self._thirst_rate * self.cfg.sim_speed
-        self.repro_cooldown = max(0.0, self.repro_cooldown - dt)
+        self.age          += dt
+        self.newborn_timer = max(0.0, self.newborn_timer - dt * self.cfg.sim_speed)
+        thirst_mult  = 1.0 + 0.5 * (self.hunger / self.max_hunger)
+        self.thirst += dt * self._thirst_rate * self.cfg.sim_speed * thirst_mult
+        self.repro_cooldown = max(0.0, self.repro_cooldown - dt * self.cfg.sim_speed)
 
-        hunger_mult  = 1.0 + 0.5 * (self.thirst / self.max_thirst)
-        self.hunger += dt * self._hunger_rate * self.cfg.sim_speed * hunger_mult
+        self.hunger += dt * self._hunger_rate * self.cfg.sim_speed
 
         if self.repro_cooldown <= 0:
-            self.repro = min(1.0, self.repro + dt * 0.002 * self.cfg.sim_speed)
+            self.repro = min(1.0, self.repro + dt * 0.008 * self.cfg.sim_speed)
 
         if self.thirst >= 1.0 or self.hunger >= 1.0 or self.age >= self.max_age:
             self.dead = True
@@ -220,6 +222,16 @@ class Animal(Entity):
 
         # Krog zaznavanja (tanek obroč pred telesom)
         pygame.draw.circle(surface, sense_ring_color, (sx, sy), int(self.sense_radius), 1)
+
+        # Rožnata barva za novorojene živali
+        if self.newborn_timer > 0:
+            t = self.newborn_timer / 4.0   # 1.0 → 0.0
+            color   = (
+                int(color[0] * (1 - t) + 255 * t),
+                int(color[1] * (1 - t) + 105 * t),
+                int(color[2] * (1 - t) + 180 * t),
+            )
+            outline = (220, 80, 150)
 
         # Telo bitja
         pygame.draw.circle(surface, color,   (sx, sy), self.size)

@@ -154,8 +154,8 @@ class UI:
         fsm  = FONT_SMALL.get_height()
         fbd  = FONT_BODY.get_height()
 
-        _hdr_span = PY + fh2 + 11          # od BOTTOM_Y do konca naslova
-        y_btn     = BOTTOM_Y + _hdr_span   # Start/Pause/Reset
+        _hdr_span = PY + fh2 + 11          # od BOTTOM_Y do konca naslova (za stolpca 2/3)
+        y_btn     = BOTTOM_Y + PY          # Start/Pause/Reset (naslov odstranjen)
         y_ter_lbl = y_btn + 36             # "Teren:" oznaka
         y_ter     = y_ter_lbl + fsm + 4    # terrain gumbi
         y_vis     = y_ter + 22 + 8         # Vizualizacija gumb
@@ -551,13 +551,6 @@ class UI:
         pygame.draw.rect(surf, CARD_A,  (COL3_X, BOTTOM_Y, SCREEN_W-COL3_X, BOT_H))
 
         # ── Stolpec 1: NASTAVITVE ──────────────────────────────────────────
-        s  = FONT_H2.render("EKOSISTEM SIMULACIJA", True, ACCENT)
-        tx = COL_W // 2 - s.get_width() // 2
-        surf.blit(s, (tx, BOTTOM_Y + PY))
-        lh = s.get_height()
-        pygame.draw.line(surf, ACCENT,
-                         (PX, BOTTOM_Y+PY+lh+2), (COL_W-PX, BOTTOM_Y+PY+lh+2), 1)
-
         for b in (self.btn_start, self.btn_pause, self.btn_reset):
             b.draw(surf, FONT_BODY)
 
@@ -576,20 +569,24 @@ class UI:
         y_avgs = self._y_kor_bar + Slider.H + 14
 
         if sim.running and sim.foxes:
-            f_age    = sum(e.age    for e in sim.foxes) / len(sim.foxes)
-            f_size   = sum(e.size   for e in sim.foxes) / len(sim.foxes)
-            f_hunger = sum(e.hunger for e in sim.foxes) / len(sim.foxes) * 100
-            f_thirst = sum(e.thirst for e in sim.foxes) / len(sim.foxes) * 100
+            f_age    = sum(e.age         for e in sim.foxes) / len(sim.foxes)
+            f_size   = sum(e.size        for e in sim.foxes) / len(sim.foxes)
+            f_hunger = sum(e.hunger      for e in sim.foxes) / len(sim.foxes) * 100
+            f_thirst = sum(e.thirst      for e in sim.foxes) / len(sim.foxes) * 100
+            f_speed  = sum(e.speed       for e in sim.foxes) / len(sim.foxes)
+            f_sense  = sum(e.sense_radius for e in sim.foxes) / len(sim.foxes)
         else:
-            f_age = f_size = f_hunger = f_thirst = 0.0
+            f_age = f_size = f_hunger = f_thirst = f_speed = f_sense = 0.0
 
         if sim.running and sim.rabbits:
-            r_age    = sum(e.age    for e in sim.rabbits) / len(sim.rabbits)
-            r_size   = sum(e.size   for e in sim.rabbits) / len(sim.rabbits)
-            r_hunger = sum(e.hunger for e in sim.rabbits) / len(sim.rabbits) * 100
-            r_thirst = sum(e.thirst for e in sim.rabbits) / len(sim.rabbits) * 100
+            r_age    = sum(e.age         for e in sim.rabbits) / len(sim.rabbits)
+            r_size   = sum(e.size        for e in sim.rabbits) / len(sim.rabbits)
+            r_hunger = sum(e.hunger      for e in sim.rabbits) / len(sim.rabbits) * 100
+            r_thirst = sum(e.thirst      for e in sim.rabbits) / len(sim.rabbits) * 100
+            r_speed  = sum(e.speed       for e in sim.rabbits) / len(sim.rabbits)
+            r_sense  = sum(e.sense_radius for e in sim.rabbits) / len(sim.rabbits)
         else:
-            r_age = r_size = r_hunger = r_thirst = 0.0
+            r_age = r_size = r_hunger = r_thirst = r_speed = r_sense = 0.0
 
         lbl_col_w = 68
         val_col_w = (COL_W - PX * 2 - lbl_col_w) // 2
@@ -608,6 +605,8 @@ class UI:
             ("Velikost", f_size,   r_size,   False),
             ("Lakota",   f_hunger, r_hunger, True),
             ("Žeja",     f_thirst, r_thirst, True),
+            ("Hitrost",  f_speed,  r_speed,  False),
+            ("Zaznava",  f_sense,  r_sense,  False),
         ]:
             ls = FONT_SMALL.render(row_lbl + ":", True, TEXT_DIM)
             surf.blit(ls, (PX, y_avgs))
@@ -620,6 +619,16 @@ class UI:
             surf.blit(fvs, (x_fox - fvs.get_width() // 2, y_avgs))
             surf.blit(rvs, (x_rab - rvs.get_width() // 2, y_avgs))
             y_avgs += row_h
+
+        # ── Rojstva (skupaj od zagona) ──────────────────────────────────────
+        BIRTH_COLOR = (255, 140, 200)
+        ls = FONT_SMALL.render("Rojstva:", True, BIRTH_COLOR)
+        surf.blit(ls, (PX, y_avgs))
+        fvs = FONT_SMALL.render(str(sim.births_fox),    True, GRAPH_FOX)
+        rvs = FONT_SMALL.render(str(sim.births_rabbit), True, GRAPH_RABBIT)
+        surf.blit(fvs, (x_fox - fvs.get_width() // 2, y_avgs))
+        surf.blit(rvs, (x_rab - rvs.get_width() // 2, y_avgs))
+        y_avgs += row_h
 
         # ── Stolpec 2: Lastnosti lisice (brez badge) ───────────────────────
         _draw_hdr(surf, COL2_X+PX, BOTTOM_Y+PY, COL_W-PX*2,

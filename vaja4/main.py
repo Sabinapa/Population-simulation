@@ -1,6 +1,7 @@
 
 #Ekosistem simulacija: Lisica (plenilec) – Zajec (plen) – Radic (hrana)
 
+
 import pygame
 import sys
 import random
@@ -63,6 +64,9 @@ class Simulation:
         self.history_rabbit = []
         self.history_clover = []
 
+        self.births_fox    = 0
+        self.births_rabbit = 0
+
     # ── zagon ─────────────────────────────────────────────────────────────
     def start(self):
         cfg = self.cfg
@@ -87,20 +91,24 @@ class Simulation:
         # Zajci
         spawn = random.sample(land, min(cfg.initial_rabbits, len(land)))
         for i, (r, c) in enumerate(spawn):
-            self.rabbits.append(Rabbit(
+            rb = Rabbit(
                 c * cfg.CELL + cfg.CELL // 2,
                 r * cfg.CELL + cfg.CELL // 2,
                 "M" if i % 2 == 0 else "F",
-                cfg))
+                cfg)
+            rb.newborn_timer = 0.0
+            self.rabbits.append(rb)
 
         # Lisice
         spawn = random.sample(land, min(cfg.initial_foxes, len(land)))
         for i, (r, c) in enumerate(spawn):
-            self.foxes.append(Fox(
+            fx = Fox(
                 c * cfg.CELL + cfg.CELL // 2,
                 r * cfg.CELL + cfg.CELL // 2,
                 "M" if i % 2 == 0 else "F",
-                cfg))
+                cfg)
+            fx.newborn_timer = 0.0
+            self.foxes.append(fx)
 
         self.tick    = 0
         self.elapsed = 0.0
@@ -110,6 +118,9 @@ class Simulation:
         self.history_fox    = [len(self.foxes)]
         self.history_rabbit = [len(self.rabbits)]
         self.history_clover = [len(self.clovers)]
+
+        self.births_fox    = 0
+        self.births_rabbit = 0
 
     # ── predogled terena (pred zagonom) ───────────────────────────────────
     def preview_terrain(self):
@@ -135,7 +146,9 @@ class Simulation:
             rb.update(dt, terrain, self.foxes, self.rabbits, self.clovers, new_rabbits)
             if rb.dead:
                 self.rabbits.remove(rb)
-        self.rabbits.extend(new_rabbits[:max(0, cfg.max_rabbits - len(self.rabbits))])
+        added_rabbits = new_rabbits[:max(0, cfg.max_rabbits - len(self.rabbits))]
+        self.rabbits.extend(added_rabbits)
+        self.births_rabbit += len(added_rabbits)
 
         # Lisice
         new_foxes = []
@@ -143,7 +156,9 @@ class Simulation:
             fx.update(dt, terrain, self.foxes, self.rabbits, new_foxes)
             if fx.dead:
                 self.foxes.remove(fx)
-        self.foxes.extend(new_foxes[:max(0, cfg.max_foxes - len(self.foxes))])
+        added_foxes = new_foxes[:max(0, cfg.max_foxes - len(self.foxes))]
+        self.foxes.extend(added_foxes)
+        self.births_fox += len(added_foxes)
 
         # Statistike (vsake 30 korakov) – radič: samo aktivni (nepojedi)
         if self.tick % 30 == 0:
