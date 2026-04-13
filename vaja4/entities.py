@@ -7,7 +7,6 @@ import pygame
 
 
 # Pomožne matematične funkcije
-
 def _dist(ax, ay, bx, by):
     return math.hypot(bx - ax, by - ay)
 

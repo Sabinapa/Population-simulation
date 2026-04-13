@@ -667,10 +667,8 @@ class UI:
             cfg.cam_y = min(cfg.MAP_H - SIM_H, cfg.cam_y + speed)
 
 
-# ══════════════════════════════════════════════════════════════════════════
-# Pomožne funkcije
-# ══════════════════════════════════════════════════════════════════════════
 
+# Pomožne funkcije
 def _text(surf, font, txt, pos, color=TEXT_MAIN):
     surf.blit(font.render(txt, True, color), pos)
 
