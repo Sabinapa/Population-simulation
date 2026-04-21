@@ -51,6 +51,111 @@ vaja4/
 
 Teren je mogoče izbrati pred zagonom – po kliku se takoj prikaže predogled.
 
+### Kako se vsak teren generira
+
+#### 1 – Reka
+
+**Korak 1 – Osnovno ozadje:**
+Mreža se najprej razdeli na dve polovici. Zgornja polovica dobí tip GOZD, spodnja TRAVA. To je samo izhodišče – reka ga bo prekinila.
+
+**Korak 2 – Parametri reke:**
+Naključno se določijo: širina reke (5–8 celic), amplituda vijuganja (1/5 višine karte), začetna faza in vertikalni položaj sredine. Vsaka generacija reke je zato drugačna.
+
+**Korak 3 – Risanje reke stolpec po stolpec:**
+Za vsak stolpec `c` se izračuna vrstica, kjer leži sredina reke:
+```
+mid = center + amplitude × sin(freq × c + phase)
+```
+Sin funkcija povzroči, da reka vijuga levo-desno. Okoli te vrednosti `mid` se narišejo trije koncentrični pasovi:
+- najprej travnati koridor (8 celic na vsako stran) – gozdne celice se spremenijo v travo
+- nato peščene brežine (1 celica na vsako stran vode)
+- nato sama voda (v sredini, široka `river_w` celic)
+
+**Korak 4 – Gozdni otočki:**
+Na koncu se vsaka travnata celica z 7 % verjetnostjo naključno spremeni v gozd – to ustvari naravno videz posameznih dreves v travniku.
+
+---
+
+#### 2 – Jezero
+
+**Korak 1 – Osnovno ozadje:**
+Celotna mreža se nastavi na GOZD.
+
+**Korak 2 – Oblika jezera:**
+Določi se središče jezera (malo levo od sredine karte) in radija elipse (vodoravni in navpični). Jezero torej ni krog, ampak elipsa.
+
+**Korak 3 – Deformacija elipse:**
+Za vsako celico se najprej izračuna, kako daleč je od središča jezera glede na elipso (vrednost `d`). Čista elipsa bi izgledala preveč umetno, zato se ji doda kotna variacija – izračuna se kot celice glede na središče (`θ`) in doda vsota treh sinusnih valov z različnimi frekvencami:
+```
+eff = d + 0.10×sin(3θ) + 0.07×cos(5θ) + 0.04×sin(7θ)
+```
+Ti sinusi "porinejo" rob jezera na nekaterih kotih ven, na drugih noter – jezero dobi nepravilno, naravno obliko.
+
+**Korak 4 – Dodelitev tipa glede na razdaljo:**
+Na podlagi vrednosti `eff` (efektivna razdalja) se vsaki celici dodeli tip:
+- `eff < 0.88` → VODA (jedro jezera)
+- `eff < 1.05` → PESEK (obala)
+- `eff < 1.65` → TRAVA (travnik ob jezeru)
+- ostalo → GOZD (zunanjost)
+
+**Korak 5 – Ribnik:**
+V zgornjem desnem kotu se z enako elipsno logiko (brez deformacije) doda manjši ribnik z ozkim peščenim pasom.
+
+**Korak 6 – Gozdne jase:**
+Vsaka gozdna celica se z 10 % verjetnostjo naključno spremeni v travo.
+
+---
+
+#### 3 – Delta
+
+**Korak 1 – Osnovno ozadje:**
+Celotna mreža se nastavi na TRAVA.
+
+**Korak 2 – Določitev kanalov:**
+Naključno se določi število kanalov (4–6) in skupna izvorna točka na vrhu karte (malo naključno zamaknjeno od sredine). Vsak kanal dobi vrednost `spread` – to je njegov odmik od sredine, od leve do desne.
+
+**Korak 3 – Risanje kanalov vrstico po vrstico:**
+Za vsak kanal in vsako vrstico se izračuna, kje leži sredina kanala v tej vrstici. Kanal se postopoma oddaljuje od skupne točke z kvadratno funkcijo:
+```
+target_c = source_c + spread × cols × 0.48 × t²
+```
+kjer je `t = r / rows` (vrednost med 0 in 1, ki pove kako daleč smo od vrha). Kvadratni `t²` pomeni, da se kanali razlivajo počasi na vrhu in hitro na dnu. Širina kanala prav tako narašča z `t`.
+
+Za glajenje se nova pozicija kanala izračuna kot 65 % ciljne in 35 % prejšnje vrednosti – kanal ne skoči nenadoma.
+
+**Korak 4 – Peščena obala:**
+Ko so vsi kanali postavljeni, se preveri vsaka travnata celica. Če ima vsaj enega od osmih sosedov vodo, se ta celica spremeni v pesek – dobimo naravno peščeno obalo.
+
+**Korak 5 – Gozdni pasovi:**
+Vsaka preostala travnata celica se z 10 % verjetnostjo naključno spremeni v gozd.
+
+---
+
+#### 4 – Dolina
+
+**Korak 1 – Radialni pasovi:**
+Za vsako celico se izračuna njena razdalja od središča karte in se normalizira (vrednost med 0 in 1):
+```
+d = hypot(c - cx, r - cy) / max_d
+```
+Čista radialna razdalja bi dala popolne koncentrične kroge. Da bi teren izgledal bolj naraven, se doda šum:
+```
+šum = 0.07×sin(5θ + 1.2) + 0.05×cos(7θ − 0.8) + 0.04×sin(c×0.08 + r×0.06)
+```
+Prva dva člena sta odvisna od kota celice (`θ`), tretji pa od njenih absolutnih koordinat – to ustvari asimetrično, nepravilno obliko.
+
+Na podlagi skupne vrednosti `dn = d + šum` se celici dodeli tip:
+- `dn < 0.18` → TRAVA (dolina v sredini)
+- `dn < 0.44` → GOZD (gozdni pas)
+- `dn < 0.63` → GORA (pobočje)
+- ostalo → VRH GORE (mrzli vrhovi na robovih)
+
+**Korak 2 – Centralno jezero:**
+Neodvisno od zgornjega se izračuna absolutna razdalja vsake celice od središča. Celice znotraj 10 % polmera karte postanejo voda, celice med 10 % in 14 % postanejo pesek (jezerska obala).
+
+**Korak 3 – Potok:**
+Izbere se naključna smer (kot med 0 in 360°). Iz središča jezera se korak po korak pomika "korak" v to smer, z majhnim sinusnim nihanjem (da ni povsem ravna črta). Vsaka celica na poti (razen gor in vrhov) postane voda. Ko je potok narisan, dobijo vse travnate in gozdne celice ob vodi peščen rob.
+
 ### Višinski pasovi (vsi tereni skupaj)
 
 | Pas | Barva | Prehodnost |

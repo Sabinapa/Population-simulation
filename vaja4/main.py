@@ -50,7 +50,7 @@ class Simulation:
         self.paused      = False
         self.show_visual = True    # ko False: simulacija teče brez risanja bitij
         self.tick        = 0
-        self.elapsed     = 0.0    # skupni pretečeni čas (skaliran s sim_speed)
+        self.elapsed     = 0.0    # skupni pretečeni čas v sekundah
 
         self.terrain : Terrain       = None
         self.foxes   : list[Fox]     = []
@@ -127,7 +127,6 @@ class Simulation:
 
     # Posodabljanje
     def update(self, dt: float):
-        # elapsed se skalira s sim_speed, tick je realni kader
         self.elapsed += dt * self.cfg.sim_speed
         self.tick    += 1
 

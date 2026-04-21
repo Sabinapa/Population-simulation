@@ -3,9 +3,9 @@ terrain.py – generiranje štirih vrst terena in pomožnih funkcij.
 
 Tipi terena:
   1 = reka    – vijugava reka z gozdnimi bregovi
-  2 = jezero  – veliko jezero z obalnimi pasovi in satelitskim ribnikom
-  3 = delta   – rečna delta z vejastimi rokavi in otoki
-  4 = dolina  – gorska dolina s koncentričnimi pasovi in centralnim jezerom
+  2 = jezero  – veliko jezero z obalnimi pasovi in ribnikom
+  3 = delta   – rečna delta z vejastimi rekami
+  4 = dolina  – gorska dolina s pasovi reke in centralnim jezerom
 """
 
 import random
@@ -38,7 +38,6 @@ class Terrain:
         self._bake_surface()
 
     # Generatorji terenov
-
     def _generate(self, terrain_type: int):
         t = terrain_type
         if   t == 1: self._gen_river()
@@ -47,15 +46,16 @@ class Terrain:
         elif t == 4: self._gen_valley()
         else:        self._gen_river()
 
+    # REKA
     def _gen_river(self):
-        """Vijugava reka z gozdnimi bregovi in naplavnimi ravnicami."""
         g = self.grid
         rows, cols = self.rows, self.cols
 
         # Gozd na eni strani, trava na drugi
-        g[:rows // 2, :] = FOREST
+        g[:rows // 2, :] = FOREST #
         g[rows // 2:, :] = GRASS
 
+        # Parametri reke (vijugavost, širina, položaj) so delno naključni
         river_w   = random.randint(5, 8)
         amplitude = rows // 5
         freq      = 2 * math.pi / cols * 1.8
@@ -85,18 +85,22 @@ class Terrain:
                 if g[r, c] == GRASS and random.random() < 0.07:
                     g[r, c] = FOREST
 
+    # JEZERO
     def _gen_lake(self):
-        """Veliko jezero z organskim obrežjem, satelitskim ribnikom in gozdnimi pasovi."""
+        """Veliko jezero z peskom, travo in gozdnimi pasovi + ribnik zgoraj desno."""
         g = self.grid
         rows, cols = self.rows, self.cols
+
+        # Osnovno ozadje je gozd
         g[:] = FOREST
 
-        # Glavno jezero (organsko oblikovano)
+        # Glavno jezero
         cx  = int(cols * 0.44)
         cy  = rows // 2
         rx  = int(cols * 0.27)
         ry  = int(rows * 0.30)
 
+        # Za vsako celico izračunamo efektivno oddaljenost od središča jezera
         for r in range(rows):
             for c in range(cols):
                 angle     = math.atan2(r - cy, c - cx)
@@ -111,7 +115,7 @@ class Terrain:
                 elif eff < 1.65:  g[r, c] = GRASS
                 # ostalo ostane FOREST
 
-        # Manjši satelitski ribnik (zgoraj desno)
+        # Manjši ribnik (zgoraj desno)
         cx2, cy2 = int(cols * 0.80), int(rows * 0.22)
         rx2, ry2 = int(cols * 0.07), int(rows * 0.08)
 
@@ -127,12 +131,16 @@ class Terrain:
                 if g[r, c] == FOREST and random.random() < 0.10:
                     g[r, c] = GRASS
 
+    # DELTA
     def _gen_delta(self):
         """Rečna delta: reka se vejasto razlije v spodnji del karte."""
         g = self.grid
         rows, cols = self.rows, self.cols
+
+        # Osnovno ozadje je trava
         g[:] = GRASS
 
+        # Parametri kanalov (število, širina, položaj) so delno naključni
         num_channels = random.randint(4, 6)
         source_c     = cols // 2 + random.randint(-cols // 8, cols // 8)
 
@@ -141,17 +149,18 @@ class Terrain:
 
             prev_c = float(source_c)
             for r in range(rows):
+                # Kanal se postopoma razliva, zato širina in odmik od začetne črte naraščata proti spodnjemu delu karte.
                 t        = r / rows
                 target_c = source_c + spread * cols * 0.48 * t * t
-                # Gladko sledenje
                 c_center = int(0.65 * target_c + 0.35 * prev_c)
                 prev_c   = float(c_center)
 
+                # Dodaj vodo v kanal
                 width = int(2 + t * 5 + random.uniform(0, 1.0))
                 for c in range(max(0, c_center - width), min(cols, c_center + width + 1)):
                     g[r, c] = WATER
 
-        # Peščeni otočki ob vodnih kanalih
+        # Obala pesek ob vodi
         sand_cands = []
         for r in range(rows):
             for c in range(cols):
@@ -159,8 +168,7 @@ class Terrain:
                     for dr, dc in ((-1, 0), (1, 0), (0, -1), (0, 1),
                                    (-1,-1), (-1,1), (1,-1), (1,1)):
                         nr, nc = r + dr, c + dc
-                        if (0 <= nr < rows and 0 <= nc < cols
-                                and g[nr, nc] == WATER):
+                        if (0 <= nr < rows and 0 <= nc < cols and g[nr, nc] == WATER):
                             sand_cands.append((r, c))
                             break
         for r, c in sand_cands:
@@ -172,10 +180,11 @@ class Terrain:
                 if g[r, c] == GRASS and random.random() < 0.10:
                     g[r, c] = FOREST
 
+    # DOLINA
     def _gen_valley(self):
         """
-        Gorska dolina: koncentrični pasovi od roba (vrh/gora) proti
-        središču (gozd → trava), z jezerom in potokom na dnu doline.
+        Gorska dolina: centralno jezero, vijugava reka,
+        gozdovi in gorski pasovi proti robom karte.
         """
         g = self.grid
         rows, cols = self.rows, self.cols
@@ -184,6 +193,7 @@ class Terrain:
         cy     = rows / 2.0
         max_d  = math.hypot(cx, cy)
 
+        #
         for r in range(rows):
             for c in range(cols):
                 d     = math.hypot(c - cx, r - cy) / max_d
@@ -237,8 +247,7 @@ class Terrain:
                             g[r, c] = SAND
                             break
 
-    # Pomožne funkcije za generiranje
-
+    # Razresi naključne celice določenega tipa (npr. gozdni otočki v travi)
     def _scatter_type(self, cell_type: int, density: float):
         g = self.grid
         for r in range(self.rows):
@@ -246,6 +255,7 @@ class Terrain:
                 if g[r, c] == GRASS and random.random() < density:
                     g[r, c] = cell_type
 
+    # Risanje površine
     def _bake_surface(self):
         cfg = self.cfg
         color_map = {
@@ -268,27 +278,30 @@ class Terrain:
         self._generate(self.cfg.terrain_type)
         self._bake_surface()
 
-    # Poizvedbe – kličejo jih entitete pri vsakem koraku
-
+    # Je celica na dani poziciji voda?
     def is_water(self, px: float, py: float) -> bool:
         r, c = self._px_to_rc(px, py)
         return bool(self.grid[r, c] == WATER)
 
+    # Je celica na dani poziciji prehodna (ne voda)?
     def is_passable(self, px: float, py: float) -> bool:
         r, c = self._px_to_rc(px, py)
         return self.grid[r, c] != WATER
 
+    # PX -> RC (piksli v indeks celice)
     def _px_to_rc(self, px: float, py: float):
         c = int(max(0, min(self.cols - 1, px // self.cell)))
         r = int(max(0, min(self.rows - 1, py // self.cell)))
         return r, c
 
+    # Vrne seznam koordinat celic ki niso voda
     def land_cells(self) -> list[tuple[int, int]]:
         return [(r, c)
                 for r in range(self.rows)
                 for c in range(self.cols)
                 if self.grid[r, c] != WATER]
 
+    # Poišče najbližjo vodo znotraj max_dist (v pikslih) od dane pozicije.
     def nearest_water(self, px: float, py: float, max_dist: float = 200) -> tuple | None:
         cell     = self.cell
         r0, c0   = self._px_to_rc(px, py)

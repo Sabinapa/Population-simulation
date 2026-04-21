@@ -55,8 +55,6 @@ FONT_H2    = None
 FONT_BODY  = None
 FONT_SMALL = None
 
-
-# ══════════════════════════════════════════════════════════════════════════
 class Button:
     def __init__(self, x, y, w, h, label, color=None):
         self.rect   = pygame.Rect(x, y, w, h)
@@ -78,7 +76,7 @@ class Button:
         surf.blit(txt, txt.get_rect(center=self.rect.center))
 
 
-# ══════════════════════════════════════════════════════════════════════════
+
 class Slider:
     H = 10
 
@@ -133,7 +131,8 @@ class Slider:
         pygame.draw.circle(surf, hdl_col, (x + fw, y + self.H // 2), 6)
 
 
-# ══════════════════════════════════════════════════════════════════════════
+
+
 class UI:
     def __init__(self, cfg: Config):
         self.cfg    = cfg
@@ -235,7 +234,7 @@ class UI:
 
         self._keys_down = set()
 
-    # ══════════════════════════════════════════════════════════════════════
+
     def handle_event(self, event, sim):
         cfg = self.cfg
 
@@ -306,7 +305,7 @@ class UI:
         cfg.sim_speed       = self.slider_speed.value
         cfg.mutation_chance = self.slider_mutation.value
 
-    # ══════════════════════════════════════════════════════════════════════
+
     def draw(self, sim):
         self.screen.fill(BG)
         self._update_camera(sim)
@@ -665,7 +664,6 @@ class UI:
             cfg.cam_y = max(0, cfg.cam_y - speed)
         if pygame.K_s   in keys or pygame.K_DOWN  in keys:
             cfg.cam_y = min(cfg.MAP_H - SIM_H, cfg.cam_y + speed)
-
 
 
 # Pomožne funkcije
