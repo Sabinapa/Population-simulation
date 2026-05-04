@@ -13,47 +13,51 @@ from ui       import UI
 HISTORY_SAMPLE_INTERVAL = 30    # zabeleži populacijo vsakih N korakov
 HISTORY_MAX_POINTS      = 200   # največja dolžina zgodovine v pomnilniku
 
-
 def main():
     pygame.init()
     pygame.display.set_caption("Ekosistem Simulacija")
 
+    # Inicializiraj konfiguracijo, uporabniški vmesnik in simulacijo.
     cfg = Config()
     ui  = UI(cfg)
     sim = Simulation(cfg, ui)
-    sim.preview_terrain()   # prikaži teren takoj preden uporabnik pritisne Start
+    sim.preview_terrain()
 
     clock = pygame.time.Clock()
     while True:
         dt = clock.tick(cfg.FPS) / 1000.0
 
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            if event.type == pygame.QUIT: # Ob kliku na X ali ALT+F4 zapri program
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE: # Ob pritisku ESC zapri program
                 pygame.quit()
                 sys.exit()
             ui.handle_event(event, sim)
 
+        # Posodobi simulacijo če teče in ni na pavzi.
         if sim.running and not sim.paused:
             sim.update(dt)
 
+        # Nariši trenutno stanje simulacije.
         ui.draw(sim)
         pygame.display.flip()
 
 
 class Simulation:
     # Jedro simulacije – upravlja teren, sezname entitet in uro.
-    def __init__(self, cfg: "Config", ui: "UI"):
-        self.cfg         = cfg
-        self.ui          = ui
-        self.running     = False
-        self.paused      = False
-        self.show_visual = True    # ko je False: simulacija teče brez risanja entitet
-        self.tick        = 0
-        self.elapsed     = 0.0    # skupni simulirani čas v sekundah
 
+    def __init__(self, cfg: "Config", ui: "UI"):
+        self.cfg         = cfg     # konfiguracija z nastavitvami simulacije
+        self.ui          = ui      # referenca na UI za posredovanje informacij
+        self.running     = False   # ali simulacija teče
+        self.paused      = False   # ali je simulacija trenutno na pavzi
+        self.show_visual = True    # ko je False: simulacija teče brez risanja entitet
+        self.tick        = 0       # števec posodobitev (korakov)
+        self.elapsed     = 0.0     # skupni simulirani čas v sekundah
+
+        # Teren in seznami entitet
         self.terrain : Terrain       = None
         self.foxes   : list[Fox]     = []
         self.rabbits : list[Rabbit]  = []
@@ -66,10 +70,11 @@ class Simulation:
         self.births_fox    = 0
         self.births_rabbit = 0
 
-    # ── Zagon / ponastavitev ───────────────────────────────────────────────────
+    # Zagon / ponastavitev
     def start(self):
-        # Zgradi svež teren in namesti začetne populacije.
         cfg = self.cfg
+
+        # Zgradi svež teren in namesti začetne populacije.
         self.terrain = Terrain(cfg)
         cfg.cam_x    = 0
         cfg.cam_y    = 0
@@ -122,26 +127,29 @@ class Simulation:
         self.births_fox    = 0
         self.births_rabbit = 0
 
+    # Generira in prikazuje teren preden se simulacija začne.
     def preview_terrain(self):
-        # Generira in prikazuje teren preden se simulacija začne.
         self.terrain   = Terrain(self.cfg)
         self.cfg.cam_x = 0
         self.cfg.cam_y = 0
 
-    # ── Glavno posodabljanje ───────────────────────────────────────────────────
+    # Glavno posodabljanje
     def update(self, dt: float):
         self.elapsed += dt * self.cfg.sim_speed
         self.tick    += 1
 
+        # Posodobi vse entitete za en korak; zberi in dodaj novorojenčke.
         self._update_entities(dt)
 
+        # Vzorči trenutno število populacij v zgodovinske sezname vsakih N korakov.
         if self.tick % HISTORY_SAMPLE_INTERVAL == 0:
             self._record_history()
 
+        # Avtomatsko zaustavi ko vse živali poginejo.
         self._check_auto_pause()
 
+    # Posodobi vse entitete za en korak
     def _update_entities(self, dt: float):
-        # Posodobi vse entitete za en korak; zbere in doda novorojenčke.
         terrain = self.terrain
         cfg     = self.cfg
 
@@ -152,9 +160,12 @@ class Simulation:
         # Zajci – novorojenčke zbiramo v ločen seznam da ne iteriramo čez njih
         new_rabbits = []
         for rabbit in self.rabbits[:]:
-            rabbit.update(dt, terrain, self.foxes, self.rabbits, self.clovers, new_rabbits)
-            if rabbit.dead:
+            rabbit.update(dt, terrain, self.foxes, self.rabbits, self.clovers, new_rabbits) # Posodobi zajca
+
+            if rabbit.dead: # Če je zajec mrtev, ga odstrani iz seznama
                 self.rabbits.remove(rabbit)
+
+        # Dodaj novorojenčke zajce v glavni seznam, vendar ne prekorači maksimalne velikosti populacije.
         added_rabbits = new_rabbits[:max(0, cfg.max_rabbits - len(self.rabbits))]
         self.rabbits.extend(added_rabbits)
         self.births_rabbit += len(added_rabbits)
@@ -163,14 +174,16 @@ class Simulation:
         new_foxes = []
         for fox in self.foxes[:]:
             fox.update(dt, terrain, self.foxes, self.rabbits, new_foxes)
+
             if fox.dead:
                 self.foxes.remove(fox)
+
         added_foxes = new_foxes[:max(0, cfg.max_foxes - len(self.foxes))]
         self.foxes.extend(added_foxes)
         self.births_fox += len(added_foxes)
 
+    # Vzorči trenutno število populacij v zgodovinske sezname.
     def _record_history(self):
-        # Vzorči trenutno število populacij v zgodovinske sezname.
         self.history_fox.append(len(self.foxes))
         self.history_rabbit.append(len(self.rabbits))
         active_clovers = sum(1 for c in self.clovers if not c.eaten)
@@ -181,8 +194,8 @@ class Simulation:
             if len(lst) > HISTORY_MAX_POINTS:
                 lst.pop(0)
 
+    # Avtomatsko zaustavi ko vse živali poginejo.
     def _check_auto_pause(self):
-        # Avtomatsko zaustavi ko vse živali poginejo.
         if len(self.foxes) == 0 and len(self.rabbits) == 0:
             self.paused = True
 

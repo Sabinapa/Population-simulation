@@ -78,8 +78,8 @@ class Clover(Entity):
 class Animal(Entity):
     """
     Prioritetna vrsta potreb (od najpomembnejše):
-        Zajec:  beg → razmnoževanje → žeja → lakota → tavanje
-        Lisica: razmnoževanje → žeja → lov → tavanje
+        Zajec:  beg > razmnoževanje > žeja > lakota > tavanje
+        Lisica: razmnoževanje > žeja > lov > tavanje
     """
 
     def __init__(self, x, y, gender: str, cfg,
@@ -93,13 +93,13 @@ class Animal(Entity):
         self.dead   = False
 
         # Lastnosti z variacijo ±variation od bazne vrednosti
-        self.speed        = _vary(speed_base,  variation)
-        self.size         = max(3, int(_vary(size_base, variation)))
-        self.sense_radius = _vary(sense_base,  variation)
-        self.max_hunger   = _vary(max_hunger,  variation)
-        self.max_thirst   = _vary(max_thirst,  variation)
-        self.max_age      = _vary(max_age,     variation)
-        self.repro_drive  = repro_drive
+        self.speed        = _vary(speed_base,  variation)              # hitrost gibanja
+        self.size         = max(3, int(_vary(size_base, variation)))   # velikost
+        self.sense_radius = _vary(sense_base,  variation)              # radij zaznavanja
+        self.max_hunger   = _vary(max_hunger,  variation)              # čas do kritične lakote
+        self.max_thirst   = _vary(max_thirst,  variation)              # čas do kritične žeje
+        self.max_age      = _vary(max_age,     variation)              # maksimalna starost
+        self.repro_drive  = repro_drive                                # prag želje po razmnoževanju
 
         self.hunger  = 0.0   # 0.0 = sito, 1.0 = smrt
         self.thirst  = 0.0   # 0.0 = napito, 1.0 = smrt
@@ -339,7 +339,6 @@ class Rabbit(Animal):
 
     # Poišče najboljšega partnerja: prednost večjemu in bližjemu.
     def _find_partner(self, rabbits):
-        """Poišče najboljšega partnerja: prednost večjemu in bližjemu."""
         best, bd = None, self.sense_radius
         for rb in rabbits: # preveri vsakega zajca
             # izključi sebe, enak spol, tiste v cooldownu in mrtve

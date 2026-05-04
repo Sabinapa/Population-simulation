@@ -118,7 +118,6 @@ class Terrain:
         # Manjši ribnik (zgoraj desno)
         cx2, cy2 = int(cols * 0.80), int(rows * 0.22)
         rx2, ry2 = int(cols * 0.07), int(rows * 0.08)
-
         for r in range(rows):
             for c in range(cols):
                 d2 = ((c - cx2) / rx2) ** 2 + ((r - cy2) / ry2) ** 2
@@ -301,7 +300,7 @@ class Terrain:
                 for c in range(self.cols)
                 if self.grid[r, c] != WATER]
 
-    # Poišče najbližjo vodo znotraj max_dist (v pikslih) od dane pozicije.
+
     def nearest_water(self, px: float, py: float, max_dist: float = 200) -> tuple | None:
         cell     = self.cell
         r0, c0   = self._px_to_rc(px, py)

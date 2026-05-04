@@ -10,7 +10,6 @@ from terrain  import Terrain
 from entities import Fox, Rabbit, Clover
 from ui       import UI
 
-
 def main():
     pygame.init()
     pygame.display.set_caption("Ekosistem Simulacija")

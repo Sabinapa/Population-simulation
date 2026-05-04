@@ -27,14 +27,15 @@ class Config:
     COLOR_MOUNTAIN = (120, 112, 102)    # barva gore
     COLOR_PEAK     = (235, 238, 245)    # barva snežnega vrha
 
-    # Začetne populacije
-    initial_foxes   = 8         # število lisic ob zagonu
-    initial_rabbits = 30        # število zajcev ob zagonu
-    initial_clovers = 80        # število radičev ob zagonu
+    # Začetne populacije ob zagonu
+    initial_foxes   = 8         # število lisic
+    initial_rabbits = 30        # število zajcev
+    initial_clovers = 80        # število radičev
 
-    max_foxes   = 120           # največje dovoljeno število lisic
-    max_rabbits = 300           # največje dovoljeno število zajcev
-    max_clovers = 600           # največje dovoljeno število radičev
+    # največje dovoljeno število
+    max_foxes   = 120           # lisic
+    max_rabbits = 300           # zajcev
+    max_clovers = 600           # radičev
 
     # Lastnosti plenilca (lisica)
     fox_speed        = 55.0     # osnovna hitrost gibanja v px/s
