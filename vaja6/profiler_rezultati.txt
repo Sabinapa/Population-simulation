@@ -1,0 +1,53 @@
+DINAMIČNI PREGLED – Vaja 6
+Koraki: 500 | DT: 0.0167s | Sim speed: 1.0
+Populacija: 30 zajcev, 8 lisic, 80 radičev
+
+=== cPROFILE REZULTATI ===
+         663011 function calls in 0.173 seconds
+
+   Ordered by: cumulative time
+   List reduced from 34 to 20 due to restriction <20>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.010    0.010    0.173    0.173 C:\Users\sabin\FERI\Magisterij\Kvaliteta\Vaje\vaja6\profiler.py:71(run_simulation)
+    15000    0.011    0.000    0.139    0.000 C:\Users\sabin\FERI\Magisterij\Kvaliteta\Vaje\vaja6\entities.py:297(update)
+    18287    0.013    0.000    0.066    0.000 C:\Users\sabin\FERI\Magisterij\Kvaliteta\Vaje\vaja6\entities.py:200(_wander)
+    15000    0.025    0.000    0.064    0.000 C:\Users\sabin\FERI\Magisterij\Kvaliteta\Vaje\vaja6\entities.py:404(_flee)
+   124989    0.021    0.000    0.034    0.000 C:\Users\sabin\FERI\Magisterij\Kvaliteta\Vaje\vaja6\entities.py:17(_dist)
+    19098    0.008    0.000    0.029    0.000 C:\Users\sabin\FERI\Magisterij\Kvaliteta\Vaje\vaja6\terrain.py:280(is_passable)
+    19000    0.016    0.000    0.026    0.000 C:\Users\sabin\FERI\Magisterij\Kvaliteta\Vaje\vaja6\entities.py:231(_clamp)
+    19098    0.014    0.000    0.021    0.000 C:\Users\sabin\FERI\Magisterij\Kvaliteta\Vaje\vaja6\terrain.py:285(_px_to_rc)
+     4000    0.002    0.000    0.021    0.000 C:\Users\sabin\FERI\Magisterij\Kvaliteta\Vaje\vaja6\entities.py:453(update)
+    19000    0.014    0.000    0.017    0.000 C:\Users\sabin\FERI\Magisterij\Kvaliteta\Vaje\vaja6\entities.py:128(_base_update)
+   125702    0.013    0.000    0.013    0.000 {built-in method math.hypot}
+   115196    0.010    0.000    0.010    0.000 {built-in method builtins.max}
+    76196    0.007    0.000    0.007    0.000 {built-in method builtins.min}
+     5702    0.001    0.000    0.003    0.000 C:\Users\sabin\FERI\Magisterij\Kvaliteta\Vaje\vaja6\entities.py:419(<genexpr>)
+    40000    0.002    0.000    0.002    0.000 C:\Users\sabin\FERI\Magisterij\Kvaliteta\Vaje\vaja6\entities.py:67(update)
+    19000    0.002    0.000    0.002    0.000 C:\Users\sabin\FERI\Magisterij\Kvaliteta\Vaje\vaja6\config.py:77(MAP_W)
+    19000    0.002    0.000    0.002    0.000 C:\Users\sabin\FERI\Magisterij\Kvaliteta\Vaje\vaja6\config.py:81(MAP_H)
+      713    0.000    0.000    0.001    0.000 C:\Users\sabin\FERI\Magisterij\Kvaliteta\Vaje\vaja6\entities.py:169(_slide_move)
+     1426    0.001    0.000    0.001    0.000 {built-in method builtins.sum}
+      713    0.000    0.000    0.000    0.000 C:\Users\sabin\FERI\Magisterij\Kvaliteta\Vaje\vaja6\entities.py:21(_normalize)
+
+
+
+=== ROČNE MERITVE (ms/klic) ===
+_bake_surface                    9.4091 ms   samo ob inicializaciji!
+nearest_water                    0.9523 ms   dvojna zanka O(search_r^2)
+_find_food                       0.0109 ms   O(n) po vseh radičih
+_find_best_prey                  0.0043 ms   O(n) po vseh zajcih
+_find_partner                    0.0012 ms   O(n) po vseh zajcih/lisicah
+list_remove                      0.0012 ms   O(n) – primerja za deque
+_flee                            0.0011 ms   O(n) comprehension + any()
+list_pop0                        0.0001 ms   O(n) – list.pop(0)
+
+deque_popleft: 0.000064 ms
+list_pop0:     0.000086 ms
+
+=== OCENA OBREMENITVE NA FRAME ===
+nearest_water: ~36.19 ms/frame
+_find_food:    ~0.33 ms/frame
+_find_partner: ~0.05 ms/frame
+_find_best_prey: ~0.03 ms/frame
+SKUPAJ: ~36.60 ms/frame od 16.7 ms budgeta
